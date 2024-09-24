@@ -8,6 +8,15 @@
 const unsigned winWidth = 800;
 const unsigned winHeight = 600;
 const unsigned FPS = 60;
+const int map[] = 
+{1, 1, 1, 1, 1, 1, 1, 1,
+ 1, 1, 0, 0, 0, 0, 1, 1,
+ 1, 0, 0, 0, 0, 0, 0, 1,
+ 1, 0, 1, 1, 1, 1, 0, 1,
+ 1, 0, 1, 1, 1, 1, 0, 1,
+ 1, 0, 0, 0, 0, 0, 0, 1,
+ 1, 1, 0, 0, 0, 0, 1, 1,
+ 1, 1, 1, 1, 1, 1, 1, 1};
 
 std::string testString;
 Player2D player;
@@ -17,6 +26,8 @@ void draw(Color);
 void drawPlayer(Player2D);
 void update();
 void movePlayer(Player2D*);
+void draw2DMap(int[]);
+Vector2 collisionCheck(Player2D); // returns a modified move dir if look dir ray collides with object/wall
 
 int main() {
     SetTargetFPS(60);
@@ -53,15 +64,31 @@ void drawPlayer(Player2D pl) {
     DrawCircle(pl.position.x, pl.position.y, 8.0f, RED);
 }
 
+void draw2DMap(int *map, int len, int squareLen) {
+    for(int i = 0; i < len; i++) {
+
+    }
+}
+
 void movePlayer(Player2D *pl) {
-    Vector2 mdir = pl->GetMoveDir(), ldir = pl->GetMoveDir(), pos = pl->position;
+    Vector2 ldir = pl->GetMoveDir(), pos = pl->position;
     float rs = pl->GetRSpeed(), ls = pl->GetLSpeed();
+
+    //tank controls
     if(IsKeyDown(KEY_LEFT))
-        pl->SetMoveDir(Vector2Rotate(mdir, -rs));
+        pl->SetMoveDir(Vector2Rotate(ldir, -rs));
     if(IsKeyDown(KEY_RIGHT))
-        pl->SetMoveDir(Vector2Rotate(mdir, rs));
+        pl->SetMoveDir(Vector2Rotate(ldir, rs));
+
+    pl->SetMoveDir(collisionCheck(*pl));
+    Vector2 mdir = pl->GetMoveDir();
+
     if(IsKeyDown(KEY_UP))
         pl->position = {pos.x + (mdir.x*ls), pos.y + (mdir.y*ls)};
     if(IsKeyDown(KEY_DOWN))
         pl->position = {pos.x - (mdir.x*ls), pos.y - (mdir.y*ls)};
+}
+
+Vector2 collisionCheck(Player2D pl) { //returns modified move dir if look dir collides with a surface, returned vector is a component of the look vector along the collided surface.
+
 }
