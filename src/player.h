@@ -1,7 +1,8 @@
 #pragma once
 #include "raylib.h"
 
-float quickHypot(float a, float b); // function to cheaply perform pythagorean addition on two floats.
+// function to cheaply perform pythagorean addition on two floats.
+double quickHypot(double a, double b); // will likely move to a more generalized personal library.
 
 // class for a player in 2-Dimensional space.
 class Player2D {
@@ -16,15 +17,15 @@ class Player2D {
 
         // gets/sets for look direction, set returns an int for error-handling
         Vector2 GetLookDir();
-        int SetLookDir(Vector2 dir);
+        void SetLookDir(Vector2 dir);
         // gets/sets for move direction
         Vector2 GetMoveDir();
-        int SetMoveDir(Vector2 dir);
+        void SetMoveDir(Vector2 dir);
         // gets/sets for linear and rotational speed
         float GetLSpeed();
-        int SetLSpeed(float speed);
+        void SetLSpeed(float speed);
         float GetRSpeed();
-        int SetRSpeed(float speed);
+        void SetRSpeed(float speed);
     private:
         float lSpeed; // linear speed
         float rSpeed; // rotational speed

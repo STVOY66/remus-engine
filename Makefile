@@ -4,6 +4,7 @@ LFLAGS := -lraylib -lopengl32 -lgdi32 -lwinmm #linking flags
 WFLAGS := -Wno-narrowing #Remove narrowing warnings
 CFLAGS = $(INC) $(LIB) $(LFLAGS) #consolidates g++ flags
 CC := g++
+CVFLAG := -std=c++2a #c++ version 20
 
 MAINSRC := main
 SRCDIR := src
