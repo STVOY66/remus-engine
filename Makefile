@@ -3,19 +3,29 @@ LIB := -L ./src -L ./deps/raylib #library directory flags
 LFLAGS := -lraylib -lopengl32 -lgdi32 -lwinmm #linking flags
 WFLAGS := -Wno-narrowing #Remove narrowing warnings
 CFLAGS = $(INC) $(LIB) $(LFLAGS) #consolidates g++ flags
+CC := g++
 
-OBJDIR := src/objs
+MAINSRC := main
 SRCDIR := src
+OBJDIR := $(SRCDIR)/objs
 SRC := $(wildcard $(SRCDIR)/*.cpp)
 OBJ := $(SRC:$(SRCDIR)/%.cpp=$(OBJDIR)/%.o)
 
-main: $(OBJ) #compiles executable using objects
+main: $(OBJ) | $(OBJDIR) #compiles executable using objects
 	@echo "Linking executable..."
-	@g++ -o main $^ $(CFLAGS)
+	@$(CC) -o main $^ $(CFLAGS)
 
-$(OBJDIR)/%.o: src/%.cpp #object compilation
+$(OBJDIR):
+	@echo "Object directory not found, creating directory..."
+	@mkdir $@
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(SRCDIR)/%.h #object compilation
 	@echo "Compiling object $@..."
-	@g++ $(WFLAGS) -c $< $(CFLAGS) -o $@
+	@$(CC) $(WFLAGS) -c $< $(CFLAGS) -o $@
+
+$(OBJDIR)/$(MAINSRC).o: $(SRCDIR)/$(MAINSRC).cpp
+	@echo "Compiling object $@..."
+	@$(CC) $(WFLAGS) -c $< $(CFLAGS) -o $@
 
 .phony: clean
 clean: #clean function to cleanup aftermath of makefile testing
