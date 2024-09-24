@@ -11,7 +11,6 @@ class Player2D {
         Player2D(int posX, int posY); // construct with position as integers
         Player2D(Vector2 pos); // construct with position as vector
         Player2D(Vector2 pos, Vector2 uDir, float lSpeed, float rSpeed); // position, unit vector as direction, linear speed, rotational speed
-        ~Player2D(); // destructor
 
         Vector2 position; // position of player in 2d space
 
