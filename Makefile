@@ -15,15 +15,15 @@ main: $(OBJ) | $(OBJDIR) #compiles executable using objects
 	@echo "Linking executable..."
 	@$(CC) -o main $^ $(CFLAGS)
 
-$(OBJDIR):
+$(OBJDIR): #creates object directory if one does not exist within the src directory
 	@echo "Object directory not found, creating directory..."
 	@mkdir $@
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(SRCDIR)/%.h #object compilation
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(SRCDIR)/%.h | $(OBJDIR) #object compilation
 	@echo "Compiling object $@..."
 	@$(CC) $(WFLAGS) -c $< $(CFLAGS) -o $@
 
-$(OBJDIR)/$(MAINSRC).o: $(SRCDIR)/$(MAINSRC).cpp
+$(OBJDIR)/$(MAINSRC).o: $(SRCDIR)/$(MAINSRC).cpp | $(OBJDIR) #compiles main source into object
 	@echo "Compiling object $@..."
 	@$(CC) $(WFLAGS) -c $< $(CFLAGS) -o $@
 
