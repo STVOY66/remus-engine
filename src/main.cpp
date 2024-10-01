@@ -34,7 +34,6 @@ int main() {
     InitWindow(winWidth, winHeight, "Remus Engine");
     player = Player2D(Vector2{winWidth/2, winHeight/2}, Vector2{0.0f, 1.0f}, 2.0f, 0.08f);
 
-    std::cout << "Beginning game-loop..." << std::endl;
     while(!WindowShouldClose()) {
         draw(BLACK);
         update();
@@ -75,17 +74,17 @@ void movePlayer(Player2D *pl) {
     float rs = pl->GetRSpeed(), ls = pl->GetLSpeed();
 
     //tank controls
-    if(IsKeyDown(KEY_LEFT))
+    if(IsKeyDown(KEY_A))
         pl->SetMoveDir(Vector2Rotate(ldir, -rs));
-    if(IsKeyDown(KEY_RIGHT))
+    if(IsKeyDown(KEY_D))
         pl->SetMoveDir(Vector2Rotate(ldir, rs));
 
-    pl->SetMoveDir(collisionCheck(*pl));
+    //pl->SetMoveDir(collisionCheck(*pl));
     Vector2 mdir = pl->GetMoveDir();
 
-    if(IsKeyDown(KEY_UP))
+    if(IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
         pl->position = {pos.x + (mdir.x*ls), pos.y + (mdir.y*ls)};
-    if(IsKeyDown(KEY_DOWN))
+    if(IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
         pl->position = {pos.x - (mdir.x*ls), pos.y - (mdir.y*ls)};
 }
 
