@@ -29,6 +29,7 @@ void update();
 void movePlayer(Player2D*);
 void draw2DMap(const int*, Vector2, int);
 void drawDebug();
+Vector2 castRay(Vector2 ipos, Vector2 udir, int scale); // returns endpoint of ray cast out from an initial position to a unit vector, inf if no collision.
 Vector2 collisionCheck(Player2D); // returns a modified move dir if look dir ray collides with object/wall
 
 int main() {
@@ -81,7 +82,7 @@ void draw2DMap(const int *map, Vector2 dim, int squareLen) {
 void drawDebug() {
     DrawText("Player Position: ", 640, 0, 12, WHITE);
     DrawText(TextFormat("%d, %d", (int)player.position.x, (int)player.position.y), 640, 12, 12, WHITE);
-    DrawText(TextFormat("%d, %d", (int)player.GetMapPos(mapScale).x, (int)player.GetMapPos(mapScale).y), 640, 24, 12, WHITE);
+    DrawText(TextFormat("%.3f, %.3f", player.GetMapPos(mapScale).x, player.GetMapPos(mapScale).y), 640, 24, 12, WHITE);
 }
 
 void movePlayer(Player2D *pl) {
@@ -101,6 +102,12 @@ void movePlayer(Player2D *pl) {
         pl->position = {pos.x + (mdir.x*ls), pos.y + (mdir.y*ls)};
     if(IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
         pl->position = {pos.x - (mdir.x*ls), pos.y - (mdir.y*ls)};
+}
+
+Vector2 castRay(Vector2 ipos, Vector2 udir, int scale) {
+    Vector2 mapPos = {(int)ipos.x % scale, (int)ipos.y / scale};
+    //check x dir
+    return Vector2{udir.x*winWidth*winHeight, udir.y*winHeight*winWidth}; // returns endpoint outside of window if no collision
 }
 
 Vector2 collisionCheck(Player2D pl) { //returns modified move dir if look dir collides with a surface, returned vector is a component of the look vector along the collided surface.
