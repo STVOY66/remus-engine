@@ -8,7 +8,7 @@
 const unsigned winWidth = 800;
 const unsigned winHeight = 600;
 const unsigned FPS = 60;
-const int map[] = 
+const int testmap1[] = 
 {1, 1, 1, 1, 1, 1, 1, 1,
  1, 1, 0, 0, 0, 0, 1, 1,
  1, 0, 0, 0, 0, 0, 0, 1,
@@ -17,6 +17,7 @@ const int map[] =
  1, 0, 0, 0, 0, 0, 0, 1,
  1, 1, 0, 0, 0, 0, 1, 1,
  1, 1, 1, 1, 1, 1, 1, 1};
+const int mapScale = 80;
 
 std::string testString;
 Player2D player;
@@ -26,7 +27,8 @@ void draw(Color);
 void drawPlayer(Player2D);
 void update();
 void movePlayer(Player2D*);
-void draw2DMap(int[]);
+void draw2DMap(const int*, Vector2, int);
+void drawDebug();
 Vector2 collisionCheck(Player2D); // returns a modified move dir if look dir ray collides with object/wall
 
 int main() {
@@ -46,7 +48,9 @@ int main() {
 void draw(Color bgColor) {
     BeginDrawing();
         ClearBackground(bgColor);
+        draw2DMap(testmap1, Vector2{8, 8}, mapScale);
         drawPlayer(player);
+        drawDebug();
     EndDrawing();
 }
 
@@ -63,10 +67,21 @@ void drawPlayer(Player2D pl) {
     DrawCircle(pl.position.x, pl.position.y, 8.0f, RED);
 }
 
-void draw2DMap(int *map, int len, int squareLen) {
-    for(int i = 0; i < len; i++) {
-
+void draw2DMap(const int *map, Vector2 dim, int squareLen) {
+    int currPos[2];
+    Color squareColor;
+    for(int i = 0; i < (dim.x * dim.y); i++) {
+        squareColor = (map[i] > 0) ? WHITE : BLACK; 
+        currPos[0] = i % (int)dim.x;
+        currPos[1] = i / (int)dim.y;
+        DrawRectangle(currPos[0]*squareLen, currPos[1]*squareLen, squareLen, squareLen, squareColor);
     }
+}
+
+void drawDebug() {
+    DrawText("Player Position: ", 640, 0, 12, WHITE);
+    DrawText(TextFormat("%d, %d", (int)player.position.x, (int)player.position.y), 640, 12, 12, WHITE);
+    DrawText(TextFormat("%d, %d", (int)player.GetMapPos(mapScale).x, (int)player.GetMapPos(mapScale).y), 640, 24, 12, WHITE);
 }
 
 void movePlayer(Player2D *pl) {

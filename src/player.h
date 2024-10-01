@@ -25,10 +25,11 @@ class Player2D {
         void SetLSpeed(float speed);
         float GetRSpeed();
         void SetRSpeed(float speed);
+        //calculate map square position based on scale of map
+        Vector2 GetMapPos(int scale);
     private:
         float lSpeed; // linear speed
         float rSpeed; // rotational speed
         Vector2 ldir; // direction player's facing as a 2d unit vector
         Vector2 mdir; // direction player's moving as a 2d unit vector (Idea to deal with collisions)
-
 };
