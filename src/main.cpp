@@ -21,6 +21,8 @@ const int mapScale = 80;
 
 std::string testString;
 Player2D player;
+Vector2 cPlane;
+Vector2 rayBuffer[winWidth];
 
 //function headers
 void draw(Color);
@@ -35,7 +37,8 @@ Vector2 collisionCheck(Player2D); // returns a modified move dir if look dir ray
 int main() {
     SetTargetFPS(60);
     InitWindow(winWidth, winHeight, "Remus Engine");
-    player = Player2D(Vector2{winWidth/2, winHeight/2}, Vector2{0.0f, 1.0f}, 2.0f, 0.08f);
+    player = Player2D(Vector2{winWidth/2, winHeight/2}, Vector2{-1.0f, 0.0f}, 2.0f, 0.08f);
+    cPlane = Vector2{0.0f, 0.66f};
 
     while(!WindowShouldClose()) {
         draw(BLACK);
@@ -63,7 +66,7 @@ void update() {
 //Draws player on 2d plane.
 void drawPlayer(Player2D pl) {
     //visualize movement direction (now locked to look direction) on 2d plane
-    DrawLine(pl.position.x, pl.position.y, pl.position.x + pl.GetMoveDir().x*24, pl.position.y + pl.GetMoveDir().y*24, BLUE);
+    DrawLine(pl.position.x, pl.position.y, pl.position.x + pl.GetMoveDir().x*mapScale, pl.position.y + pl.GetMoveDir().y*mapScale, BLUE);
     //visualize player on 2d plane.
     DrawCircle(pl.position.x, pl.position.y, 8.0f, RED);
 }
@@ -83,6 +86,8 @@ void drawDebug() {
     DrawText("Player Position: ", 640, 0, 12, WHITE);
     DrawText(TextFormat("%d, %d", (int)player.position.x, (int)player.position.y), 640, 12, 12, WHITE);
     DrawText(TextFormat("%.3f, %.3f", player.GetMapPos(mapScale).x, player.GetMapPos(mapScale).y), 640, 24, 12, WHITE);
+    Vector2 dirPos = Vector2{player.position.x + (player.GetMoveDir().x*mapScale), player.position.y + (player.GetMoveDir().y*mapScale)};
+    DrawLine(dirPos.x - cPlane.x*mapScale, dirPos.y - cPlane.y*mapScale, dirPos.x + cPlane.x*mapScale, dirPos.y + cPlane.y*mapScale, GREEN);
 }
 
 void movePlayer(Player2D *pl) {
@@ -90,11 +95,14 @@ void movePlayer(Player2D *pl) {
     float rs = pl->GetRSpeed(), ls = pl->GetLSpeed();
 
     //tank controls
-    if(IsKeyDown(KEY_A))
+    if(IsKeyDown(KEY_A)) {
         pl->SetMoveDir(Vector2Rotate(ldir, -rs));
-    if(IsKeyDown(KEY_D))
+        cPlane = Vector2Rotate(cPlane, -rs);
+    }
+    else if(IsKeyDown(KEY_D)) {
         pl->SetMoveDir(Vector2Rotate(ldir, rs));
-
+        cPlane = Vector2Rotate(cPlane, rs);
+    }
     //pl->SetMoveDir(collisionCheck(*pl));
     Vector2 mdir = pl->GetMoveDir();
 
@@ -104,10 +112,13 @@ void movePlayer(Player2D *pl) {
         pl->position = {pos.x - (mdir.x*ls), pos.y - (mdir.y*ls)};
 }
 
-Vector2 castRay(Vector2 ipos, Vector2 udir, int scale) {
-    Vector2 mapPos = {(int)ipos.x % scale, (int)ipos.y / scale};
-    //check x dir
-    return Vector2{udir.x*winWidth*winHeight, udir.y*winHeight*winWidth}; // returns endpoint outside of window if no collision
+void castRays(Vector2 pos, Vector2 dir, Vector2 camPlane) {
+    Vector2 outDir;
+    float camX;
+    for(int x = 0; x < winWidth; x++) {
+        camX = 2*x/winWidth - 1;
+        rayBuffer[x] = Vector2{dir.x + camPlane.x*camX, dir.y + camPlane.y*camX};
+    }
 }
 
 Vector2 collisionCheck(Player2D pl) { //returns modified move dir if look dir collides with a surface, returned vector is a component of the look vector along the collided surface.
