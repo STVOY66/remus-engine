@@ -27,11 +27,12 @@ Vector2 rayBuffer[winWidth];
 //function headers
 void draw(Color);
 void drawPlayer(Player2D);
+void drawRays();
 void update();
 void movePlayer(Player2D*);
 void draw2DMap(const int*, Vector2, int);
 void drawDebug();
-Vector2 castRay(Vector2 ipos, Vector2 udir, int scale); // returns endpoint of ray cast out from an initial position to a unit vector, inf if no collision.
+void castRays(Vector2, Vector2); // returns endpoint of ray cast out from an initial position to a unit vector, inf if no collision.
 Vector2 collisionCheck(Player2D); // returns a modified move dir if look dir ray collides with object/wall
 
 int main() {
@@ -53,6 +54,7 @@ void draw(Color bgColor) {
     BeginDrawing();
         ClearBackground(bgColor);
         draw2DMap(testmap1, Vector2{8, 8}, mapScale);
+        drawRays();
         drawPlayer(player);
         drawDebug();
     EndDrawing();
@@ -61,6 +63,7 @@ void draw(Color bgColor) {
 //Handles all update functions between frames
 void update() {
     movePlayer(&player);
+    castRays(player.GetLookDir(), cPlane);
 }
 
 //Draws player on 2d plane.
@@ -86,25 +89,28 @@ void drawDebug() {
     DrawText("Player Position: ", 640, 0, 12, WHITE);
     DrawText(TextFormat("%d, %d", (int)player.position.x, (int)player.position.y), 640, 12, 12, WHITE);
     DrawText(TextFormat("%.3f, %.3f", player.GetMapPos(mapScale).x, player.GetMapPos(mapScale).y), 640, 24, 12, WHITE);
+    //draws camera plane
     Vector2 dirPos = Vector2{player.position.x + (player.GetMoveDir().x*mapScale), player.position.y + (player.GetMoveDir().y*mapScale)};
     DrawLine(dirPos.x - cPlane.x*mapScale, dirPos.y - cPlane.y*mapScale, dirPos.x + cPlane.x*mapScale, dirPos.y + cPlane.y*mapScale, GREEN);
+    //draws player look dir
+    //DrawLine(player.position.x, player.position.y, player.position.x + player.GetLookDir().x*mapScale, player.position.y + player.GetLookDir().y*mapScale, YELLOW);
 }
 
 void movePlayer(Player2D *pl) {
-    Vector2 ldir = pl->GetMoveDir(), pos = pl->position;
+    Vector2 mdir = pl->GetMoveDir(), pos = pl->position, ldir = pl->GetLookDir();
     float rs = pl->GetRSpeed(), ls = pl->GetLSpeed();
 
     //tank controls
     if(IsKeyDown(KEY_A)) {
-        pl->SetMoveDir(Vector2Rotate(ldir, -rs));
+        pl->SetMoveDir(Vector2Rotate(mdir, -rs));
+        pl->SetLookDir(Vector2Rotate(ldir, -rs));
         cPlane = Vector2Rotate(cPlane, -rs);
     }
     else if(IsKeyDown(KEY_D)) {
-        pl->SetMoveDir(Vector2Rotate(ldir, rs));
+        pl->SetMoveDir(Vector2Rotate(mdir, rs));
+        pl->SetLookDir(Vector2Rotate(ldir, rs));
         cPlane = Vector2Rotate(cPlane, rs);
     }
-    //pl->SetMoveDir(collisionCheck(*pl));
-    Vector2 mdir = pl->GetMoveDir();
 
     if(IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
         pl->position = {pos.x + (mdir.x*ls), pos.y + (mdir.y*ls)};
@@ -112,7 +118,7 @@ void movePlayer(Player2D *pl) {
         pl->position = {pos.x - (mdir.x*ls), pos.y - (mdir.y*ls)};
 }
 
-void castRays(Vector2 pos, Vector2 dir, Vector2 camPlane) {
+void castRays(Vector2 dir, Vector2 camPlane) { //fills rayBuffer given a direction and camera plane.
     Vector2 outDir;
     float camX;
     for(int x = 0; x < winWidth; x++) {
@@ -121,6 +127,10 @@ void castRays(Vector2 pos, Vector2 dir, Vector2 camPlane) {
     }
 }
 
-Vector2 collisionCheck(Player2D pl) { //returns modified move dir if look dir collides with a surface, returned vector is a component of the look vector along the collided surface.
-
+void drawRays() {
+    Vector2 ray;
+    for(int i = 0; i < winWidth; i++) {
+        ray = rayBuffer[i];
+        DrawLine(player.position.x, player.position.y, player.position.x + ray.x*200, player.position.y + ray.y*200, YELLOW);
+    }
 }
