@@ -128,9 +128,10 @@ void castRays(Vector2 dir, Vector2 camPlane) { //fills rayBuffer given a directi
 }
 
 void drawRays() {
-    Vector2 ray;
-    for(int i = 0; i < winWidth; i++) {
-        ray = rayBuffer[i];
-        DrawLine(player.position.x, player.position.y, player.position.x + ray.x*200, player.position.y + ray.y*200, YELLOW);
-    }
+    Vector2 ray = rayBuffer[0];
+    DrawLine(player.position.x, player.position.y, player.position.x + ray.x*mapScale, player.position.y + ray.y*mapScale, YELLOW);
+    // for(int i = 0; i < winWidth; i++) {
+    //     ray = rayBuffer[i];
+    //     DrawLine(player.position.x, player.position.y, player.position.x + ray.x*200, player.position.y + ray.y*200, YELLOW);
+    // }
 }
