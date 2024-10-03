@@ -119,11 +119,10 @@ void movePlayer(Player2D *pl) {
 }
 
 void castRays(Vector2 dir, Vector2 camPlane) { //fills rayBuffer given a direction and camera plane.
-    Vector2 outDir;
     float camX;
     for(int x = 0; x < winWidth; x++) {
-        camX = 2*x/winWidth - 1;
-        rayBuffer[x] = Vector2{dir.x + camPlane.x*camX, dir.y + camPlane.y*camX};
+        camX = 2*(x/winWidth) - 1;
+        rayBuffer[x] = Vector2{dir.x + camPlane.x*float(camX), dir.y + camPlane.y*float(camX)};
     }
 }
 
