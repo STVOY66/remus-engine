@@ -119,18 +119,17 @@ void movePlayer(Player2D *pl) {
 }
 
 void castRays(Vector2 dir, Vector2 camPlane) { //fills rayBuffer given a direction and camera plane.
-    float camX;
+    double camX;
     for(int x = 0; x < winWidth; x++) {
-        camX = 2*(x/winWidth) - 1;
+        camX = 2.0*(double(x)/double(winWidth)) - 1.0;
         rayBuffer[x] = Vector2{dir.x + camPlane.x*float(camX), dir.y + camPlane.y*float(camX)};
     }
 }
 
 void drawRays() {
-    Vector2 ray = rayBuffer[0];
-    DrawLine(player.position.x, player.position.y, player.position.x + ray.x*mapScale, player.position.y + ray.y*mapScale, YELLOW);
-    // for(int i = 0; i < winWidth; i++) {
-    //     ray = rayBuffer[i];
-    //     DrawLine(player.position.x, player.position.y, player.position.x + ray.x*200, player.position.y + ray.y*200, YELLOW);
-    // }
+    Vector2 ray;
+    for(int i = 0; i < winWidth; i++) {
+        ray = rayBuffer[i];
+        DrawLine(player.position.x, player.position.y, player.position.x + ray.x*200, player.position.y + ray.y*200, YELLOW);
+    }
 }

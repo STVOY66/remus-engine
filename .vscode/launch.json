@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "main", //I named it Pusk because i can 
+            "name": "main",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/main.exe", //path to your programs exe and exe name
+            "program": "${workspaceFolder}/main.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -21,7 +21,8 @@
                     "text": "-enable-pretty-printing",
                     "ignoreFailures": true
                 }
-            ]
+            ],
+            "preLaunchTask": "Make Build"
         }
     ]
 }
