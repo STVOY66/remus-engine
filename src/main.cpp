@@ -206,9 +206,9 @@ void drawRays2D() {
 }
 
 void drawView() {
-    Color wallColor = WHITE;
+    Color wallColorI = RED; Color wallColor;
     Color floorColor = DARKGRAY;
-    Color ceilColor = LIGHTGRAY;
+    Color ceilColor = BLUE;
     int lineHeight;
     int drawStart; int drawEnd;
 
@@ -221,6 +221,8 @@ void drawView() {
         if(drawStart < 0) drawStart = 0;
         drawEnd = lineHeight/2+winHeight/2;
         if(drawEnd >= winHeight) drawEnd = winHeight - 1;
+
+        wallColor = ColorBrightness(wallColorI, -(1.2f*(float)lineHeight/(float)winHeight));
 
         DrawLine(i, drawStart, i, drawEnd, wallColor);
     }
