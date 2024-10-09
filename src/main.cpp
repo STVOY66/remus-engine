@@ -8,6 +8,7 @@
 const unsigned winWidth = 800;
 const unsigned winHeight = 600;
 const unsigned FPS = 60;
+const Vector2 mapDim = {8, 8};
 const int testmap1[] = 
 {1, 1, 1, 1, 1, 1, 1, 1,
  1, 1, 0, 0, 0, 0, 1, 1,
@@ -25,9 +26,8 @@ struct CastRay {
 };
 
 enum HitType {
-    NONE = 0,
-    NS = 1,
-    EW = 2,
+    NS,
+    EW
 };
 
 std::string testString;
@@ -49,7 +49,7 @@ Vector2 collisionCheck(Player2D); // returns a modified move dir if look dir ray
 int main() {
     SetTargetFPS(60);
     InitWindow(winWidth, winHeight, "Remus Engine");
-    player = Player2D(Vector2{winWidth/2, winHeight/2}, Vector2{-1.0f, 0.0f}, 2.0f, 0.08f);
+    player = Player2D(Vector2{200, 120}, Vector2{-1.0f, 0.0f}, 2.0f, 0.08f);
     cPlane = Vector2{0.0f, 0.66f};
 
     while(!WindowShouldClose()) {
@@ -135,13 +135,14 @@ void castRays(Vector2 dir, Vector2 camPlane) { //fills rayBuffer given a directi
     double sideDistX, sideDistY; // distance from current position to edge of map square
     Vector2 rayDir; // stores direction of current ray
     Vector2 pPos = player.GetMapPos(mapScale);
-    int mapX = player.GetMapPos(mapScale).x , mapY = player.GetMapPos(mapScale).y; // get current map square as int
+    int mapX, mapY; // get current map square as int
     int stepX, stepY; // which direction along the axes
-    HitType hit = NONE; // determines whether there was a hit, and whether it was NS or EW
+    HitType side; // determines whether there was a hit, and whether it was NS or EW
 
     for(int x = 0; x < winWidth; x++) {
         camX = 2.0*(double(x)/double(winWidth)) - 1.0;
         rayDir = Vector2{dir.x + camPlane.x*float(camX), dir.y + camPlane.y*float(camX)};
+        mapX = player.GetMapPos(mapScale).x; mapY = player.GetMapPos(mapScale).y;
         dDistX = (rayDir.x == 0) ? 1e30 : std::abs(1/rayDir.x);
         dDistY = (rayDir.y == 0) ? 1e30 : std::abs(1/rayDir.y);
 
@@ -160,8 +161,32 @@ void castRays(Vector2 dir, Vector2 camPlane) { //fills rayBuffer given a directi
             stepY = 1;
             sideDistY = (mapY + 1.0 - pPos.y) * dDistY;
         }
+        //DDA
+        int hit = 0;
+        int currentIndex;
+        while(hit == 0) {
+            currentIndex = mapY*8 + mapX;
+            if(testmap1[currentIndex] > 0) {
+                hit = 1;
+                if(side == EW)
+                    sideDistX -= dDistX;
+                if(side == NS)
+                    sideDistY -= dDistY;
+            }
+            if(hit == 0) {
+                if(sideDistX < sideDistY) {
+                    sideDistX += dDistX;
+                    mapX += stepX;
+                    side = EW;
+                } else {
+                    sideDistY += dDistY;
+                    mapY += stepY;
+                    side = NS;
+                }
+            }
+        }
 
-        rayBuffer[x] = CastRay{rayDir, __min(sideDistX, sideDistY)*mapScale};
+        rayBuffer[x] = CastRay{rayDir, __min(sideDistX, sideDistY)};
     }
 }
 
@@ -169,6 +194,6 @@ void drawRays() {
     CastRay ray;
     for(int i = 0; i < winWidth; i++) {
         ray = rayBuffer[i];
-        DrawLine(player.position.x, player.position.y, player.position.x + ray.dir.x*ray.dist, player.position.y + ray.dir.y*ray.dist, YELLOW);
+        DrawLine(player.position.x, player.position.y, player.position.x + ray.dir.x*ray.dist*mapScale, player.position.y + ray.dir.y*ray.dist*mapScale, YELLOW);
     }
 }
