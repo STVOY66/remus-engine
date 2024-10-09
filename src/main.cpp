@@ -38,13 +38,13 @@ CastRay rayBuffer[winWidth];
 //function headers
 void draw(Color);
 void drawPlayer(Player2D);
-void drawRays();
+void drawRays2D();
+void drawView();
 void update();
 void movePlayer(Player2D*);
 void draw2DMap(const int*, Vector2, int);
 void drawDebug();
-void castRays(Vector2, Vector2); // returns endpoint of ray cast out from an initial position to a unit vector, inf if no collision.
-Vector2 collisionCheck(Player2D); // returns a modified move dir if look dir ray collides with object/wall
+void castRays(Vector2, Vector2);
 
 int main() {
     SetTargetFPS(60);
@@ -65,7 +65,7 @@ void draw(Color bgColor) {
     BeginDrawing();
         ClearBackground(bgColor);
         draw2DMap(testmap1, Vector2{8, 8}, mapScale);
-        drawRays();
+        drawRays2D();
         drawPlayer(player);
         drawDebug();
     EndDrawing();
@@ -85,6 +85,7 @@ void drawPlayer(Player2D pl) {
     DrawCircle(pl.position.x, pl.position.y, 8.0f, RED);
 }
 
+//top-down visualization of map
 void draw2DMap(const int *map, Vector2 dim, int squareLen) {
     int currPos[2];
     Color squareColor;
@@ -96,6 +97,7 @@ void draw2DMap(const int *map, Vector2 dim, int squareLen) {
     }
 }
 
+//draws debugging information to screen at runtime
 void drawDebug() {
     DrawText("Player Position: ", 640, 0, 12, WHITE);
     DrawText(TextFormat("%d, %d", (int)player.position.x, (int)player.position.y), 640, 12, 12, WHITE);
@@ -107,6 +109,7 @@ void drawDebug() {
     //DrawLine(player.position.x, player.position.y, player.position.x + player.GetLookDir().x*mapScale, player.position.y + player.GetLookDir().y*mapScale, YELLOW);
 }
 
+// moves a Player2D object given keyboard input
 void movePlayer(Player2D *pl) {
     Vector2 mdir = pl->GetMoveDir(), pos = pl->position, ldir = pl->GetLookDir();
     float rs = pl->GetRSpeed(), ls = pl->GetLSpeed();
@@ -129,24 +132,25 @@ void movePlayer(Player2D *pl) {
         pl->position = {pos.x - (mdir.x*ls), pos.y - (mdir.y*ls)};
 }
 
-void castRays(Vector2 dir, Vector2 camPlane) { //fills rayBuffer given a direction and camera plane.
-    double camX;
+//fills rayBuffer given a direction and camera plane.
+void castRays(Vector2 dir, Vector2 camPlane) {
+    double camX; // position on camera plane normalized between -1 and 1
     double dDistX, dDistY; // distance from one side to next for each axis
-    double sideDistX, sideDistY; // distance from current position to edge of map square
+    double sideDistX, sideDistY; // distance from current position to ray collision point
     Vector2 rayDir; // stores direction of current ray
-    Vector2 pPos = player.GetMapPos(mapScale);
-    int mapX, mapY; // get current map square as int
+    Vector2 pPos = player.GetMapPos(mapScale); // initial position on the map
+    int mapX, mapY; // current map square as int
     int stepX, stepY; // which direction along the axes
     HitType side; // determines whether there was a hit, and whether it was NS or EW
 
     for(int x = 0; x < winWidth; x++) {
         camX = 2.0*(double(x)/double(winWidth)) - 1.0;
         rayDir = Vector2{dir.x + camPlane.x*float(camX), dir.y + camPlane.y*float(camX)};
-        mapX = player.GetMapPos(mapScale).x; mapY = player.GetMapPos(mapScale).y;
+        mapX = pPos.x; mapY = pPos.y;
         dDistX = (rayDir.x == 0) ? 1e30 : std::abs(1/rayDir.x);
         dDistY = (rayDir.y == 0) ? 1e30 : std::abs(1/rayDir.y);
 
-        //Calculate distance from current pos to next side.
+        //Calculate distance from current pos to edge of current map square, as well as step direction
         if(rayDir.x < 0) {
             stepX = -1;
             sideDistX = (pPos.x - mapX) * dDistX;
@@ -162,18 +166,19 @@ void castRays(Vector2 dir, Vector2 camPlane) { //fills rayBuffer given a directi
             sideDistY = (mapY + 1.0 - pPos.y) * dDistY;
         }
         //DDA
-        int hit = 0;
-        int currentIndex;
+        int hit = 0; // stores whether a map object has been hit
+        int currentIndex; // stores 1d index for 2d map coordinates
         while(hit == 0) {
             currentIndex = mapY*8 + mapX;
             if(testmap1[currentIndex] > 0) {
                 hit = 1;
+                // if hit, rolls back to outer edge of map square
                 if(side == EW)
                     sideDistX -= dDistX;
                 if(side == NS)
                     sideDistY -= dDistY;
             }
-            if(hit == 0) {
+            if(hit == 0) { // only increases distance if no hit
                 if(sideDistX < sideDistY) {
                     sideDistX += dDistX;
                     mapX += stepX;
@@ -186,14 +191,25 @@ void castRays(Vector2 dir, Vector2 camPlane) { //fills rayBuffer given a directi
             }
         }
 
-        rayBuffer[x] = CastRay{rayDir, __min(sideDistX, sideDistY)};
+        rayBuffer[x] = CastRay{rayDir, __min(sideDistX, sideDistY)}; // stores ray in buffer with distance to map object
     }
 }
 
-void drawRays() {
+//top-down visualization of ray-casting
+void drawRays2D() {
     CastRay ray;
     for(int i = 0; i < winWidth; i++) {
         ray = rayBuffer[i];
         DrawLine(player.position.x, player.position.y, player.position.x + ray.dir.x*ray.dist*mapScale, player.position.y + ray.dir.y*ray.dist*mapScale, YELLOW);
     }
+}
+
+void drawView() {
+    // Color wallColorW
+
+
+
+    // for(int i = 0; i < winWidth; i++) {
+
+    // }
 }
