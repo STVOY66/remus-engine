@@ -64,10 +64,11 @@ int main() {
 void draw(Color bgColor) {
     BeginDrawing();
         ClearBackground(bgColor);
-        draw2DMap(testmap1, Vector2{8, 8}, mapScale);
-        drawRays2D();
-        drawPlayer(player);
-        drawDebug();
+        //draw2DMap(testmap1, Vector2{8, 8}, mapScale);
+        //drawRays2D();
+        //drawPlayer(player);
+        //drawDebug();
+        drawView();
     EndDrawing();
 }
 
@@ -116,14 +117,14 @@ void movePlayer(Player2D *pl) {
 
     //tank controls
     if(IsKeyDown(KEY_A)) {
-        pl->SetMoveDir(Vector2Rotate(mdir, -rs));
-        pl->SetLookDir(Vector2Rotate(ldir, -rs));
-        cPlane = Vector2Rotate(cPlane, -rs);
-    }
-    else if(IsKeyDown(KEY_D)) {
         pl->SetMoveDir(Vector2Rotate(mdir, rs));
         pl->SetLookDir(Vector2Rotate(ldir, rs));
         cPlane = Vector2Rotate(cPlane, rs);
+    }
+    else if(IsKeyDown(KEY_D)) {
+        pl->SetMoveDir(Vector2Rotate(mdir, -rs));
+        pl->SetLookDir(Vector2Rotate(ldir, -rs));
+        cPlane = Vector2Rotate(cPlane, -rs);
     }
 
     if(IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
@@ -205,11 +206,22 @@ void drawRays2D() {
 }
 
 void drawView() {
-    // Color wallColorW
+    Color wallColor = WHITE;
+    Color floorColor = DARKGRAY;
+    Color ceilColor = LIGHTGRAY;
+    int lineHeight;
+    int drawStart; int drawEnd;
 
+    DrawRectangle(0, 0, winWidth, winHeight/2, ceilColor);
+    DrawRectangle(0, winHeight/2, winWidth, winHeight/2, floorColor);
 
+    for(int i = 0; i < winWidth; i++) {
+        lineHeight = (int)(winHeight/rayBuffer[i].dist);
+        drawStart = -lineHeight/2 + winHeight/2;
+        if(drawStart < 0) drawStart = 0;
+        drawEnd = lineHeight/2+winHeight/2;
+        if(drawEnd >= winHeight) drawEnd = winHeight - 1;
 
-    // for(int i = 0; i < winWidth; i++) {
-
-    // }
+        DrawLine(i, drawStart, i, drawEnd, wallColor);
+    }
 }
