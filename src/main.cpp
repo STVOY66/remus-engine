@@ -3,6 +3,10 @@
 #include "player.h"
 #include <string>
 #include <iostream>
+#include <vector>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 //constant values
 const unsigned winWidth = 800;
@@ -35,12 +39,16 @@ std::string testString;
 Player2D player;
 Vector2 cPlane;
 CastRay rayBuffer[winWidth];
+int screenBuffer[winHeight][winWidth];
+std::vector<Texture2D> textures;
+
 
 //function headers
 void draw(Color);
 void drawPlayer(Player2D);
 void drawRays2D();
 void drawView();
+int loadTextures(fs::path);
 void update();
 void movePlayer(Player2D*);
 void draw2DMap(const int*, Vector2, int);
@@ -48,17 +56,36 @@ void drawDebug();
 void castRays(Vector2, Vector2);
 
 int main() {
-    SetTargetFPS(60);
-    InitWindow(winWidth, winHeight, "Remus Engine");
-    player = Player2D(Vector2{200, 120}, Vector2{-1.0f, 0.0f}, 2.0f, 0.08f);
-    cPlane = Vector2{0.0f, 0.66f};
+    // SetTargetFPS(60);
+    // InitWindow(winWidth, winHeight, "Remus Engine");
+    // player = Player2D(Vector2{200, 120}, Vector2{-1.0f, 0.0f}, 2.0f, 0.08f);
+    // cPlane = Vector2{0.0f, 0.66f};
+    loadTextures("./resources/textures");
 
-    while(!WindowShouldClose()) {
-        draw(BLACK);
-        update();
+    // while(!WindowShouldClose()) {
+    //     draw(BLACK);
+    //     update();
+    // }
+
+    // CloseWindow();
+}
+
+//load textures from a directory into vector
+int loadTextures(fs::path texDir) {
+    if(!fs::is_directory(texDir) || !fs::exists(texDir)) return 1;
+
+    int index = 0;
+    Texture tex;
+    for(fs::directory_entry dir_ent : fs::directory_iterator{texDir}) {
+        if(dir_ent.path().extension() == ".png"){
+            tex = LoadTexture(dir_ent.path().generic_string().c_str());
+            textures.push_back(tex);
+            std::cout << textures.at(index).id << std::endl;
+            index++;
+        }
     }
 
-    CloseWindow();
+    return 0;
 }
 
 //Handles all draw functions
@@ -70,6 +97,7 @@ void draw(Color bgColor) {
         //drawPlayer(player);
         //drawDebug();
         drawView();
+        //DrawTextureEx(textures[0], {0.0f, 0.0f}, 0.0f, 2.0f, BLACK);
     EndDrawing();
 }
 
@@ -208,6 +236,7 @@ void drawRays2D() {
     }
 }
 
+//draws 3d view
 void drawView() {
     Color wallColorI = RED; Color wallColor;
     Color floorColor = DARKGRAY;
