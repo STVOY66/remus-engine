@@ -20,14 +20,15 @@ const int testmap1[] =
  1, 1, 1, 1, 1, 1, 1, 1};
 const int mapScale = 80;
 
-struct CastRay {
-    Vector2 dir;
-    double dist;
-};
-
 enum HitType {
     NS,
     EW
+};
+
+struct CastRay {
+    Vector2 dir;
+    double dist;
+    HitType side;
 };
 
 std::string testString;
@@ -192,7 +193,9 @@ void castRays(Vector2 dir, Vector2 camPlane) {
             }
         }
 
-        rayBuffer[x] = CastRay{rayDir, __min(sideDistX, sideDistY)}; // stores ray in buffer with distance to map object
+        side = (sideDistX < sideDistY) ? EW : NS;
+
+        rayBuffer[x] = CastRay{rayDir, __min(sideDistX, sideDistY), side}; // stores ray in buffer with distance to map object
     }
 }
 
@@ -222,7 +225,8 @@ void drawView() {
         drawEnd = lineHeight/2+winHeight/2;
         if(drawEnd >= winHeight) drawEnd = winHeight - 1;
 
-        wallColor = ColorBrightness(wallColorI, -(((float)winHeight/(5.0f*(float)lineHeight))));
+        //wallColor = ColorBrightness(wallColorI, -(((float)winHeight/(5.0f*(float)lineHeight)))); // rudimentary lighting based on lineHeight
+        wallColor = (rayBuffer[i].side == EW) ? ColorBrightness(wallColorI, -0.2f) : wallColorI; // rudimentary lighting based on side
 
         DrawLine(i, drawStart, i, drawEnd, wallColor);
     }
