@@ -222,7 +222,7 @@ void drawView() {
         drawEnd = lineHeight/2+winHeight/2;
         if(drawEnd >= winHeight) drawEnd = winHeight - 1;
 
-        wallColor = ColorBrightness(wallColorI, -(1.2f*(float)lineHeight/(float)winHeight));
+        wallColor = ColorBrightness(wallColorI, -(((float)winHeight/(5.0f*(float)lineHeight))));
 
         DrawLine(i, drawStart, i, drawEnd, wallColor);
     }
