@@ -65,7 +65,7 @@ int main() {
     }
 
     while(!quit) {
-        draw(BLACK);
+        draw();
         while(SDL_PollEvent(&e) != 0) {
             update(&e);
             if(e.type == SDL_QUIT) quit = true;
@@ -101,7 +101,7 @@ void close() {
 }
 
 //Handles all draw functions
-void draw(SDL_Color bgColor) {
+void draw() {
     // BeginDrawing();
     //     ClearBackground(bgColor);
         //draw2DMap(testmap1, Vector2{8, 8}, mapScale);
