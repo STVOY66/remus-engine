@@ -46,7 +46,6 @@ SDL_Surface* screenSurface = NULL;
 SDL_Renderer* mainRender = NULL;
 
 //function headers
-void draw();
 void render();
 void update();
 bool eventHandler(SDL_Event);
@@ -60,7 +59,7 @@ void drawDebug();
 
 void renderView();
 
-void movePlayer(Player2D*, SDL_Event);
+void movePlayer(Player2D*, const Uint8*);
 void castRays(Vector2f, Vector2f);
 
 
@@ -69,6 +68,7 @@ int main(int argc, char **argv) {
     std::cout << "Executing program..." << std::endl;
     bool quit = false;
     SDL_Event e;
+    Uint64 ticks1 = SDL_GetTicks64(), ticks2 = SDL_GetTicks64(), deltaTime;
 
     if(!init(RENDERER)) {
         std::cout << "Program failed to initialize" << std::endl;
@@ -77,9 +77,16 @@ int main(int argc, char **argv) {
 
     std::cout << "Running main loop..." << std::endl;
     while(!quit) {
-        render();
-        update();
-        quit = eventHandler(e);
+        ticks1 = SDL_GetTicks64();
+        deltaTime = ticks1 - ticks2;
+        if(deltaTime > 1000.0f/float(FPS)) {
+            std::cout << "fps: " << 1000.0/deltaTime << std::endl;
+            quit = eventHandler(e);
+            render();
+            update();
+            ticks2 = ticks1;
+        }
+        
     }
 
     close();
@@ -136,18 +143,6 @@ void close() {
     SDL_Quit();
 }
 
-//Handles all draw functions
-void draw() {
-    // BeginDrawing();
-    //     ClearBackground(bgColor);
-        //draw2DMap(testmap1, Vector2{8, 8}, mapScale);
-        //drawRays2D();
-        //drawPlayer(player);
-        //drawDebug();
-    //     drawView();
-    // EndDrawing();
-}
-
 // handles functions that use a SDL_Renderer
 void render() {
     SDL_SetRenderDrawColor(mainRender, BLACK.r, BLACK.g, BLACK.b, BLACK.a);
@@ -159,6 +154,8 @@ void render() {
 
 //Handles all update functions between frames
 void update() {
+    const Uint8* currKeyStates = SDL_GetKeyboardState(NULL);
+    movePlayer(&player, currKeyStates);
     castRays(player.GetLookDir(), cPlane);
 }
 
@@ -173,7 +170,6 @@ void drawPlayer(Player2D pl) {
 bool eventHandler(SDL_Event e) {
     while(SDL_PollEvent(&e)) {
         if(e.type == SDL_QUIT) return true;
-        movePlayer(&player, e);
     }
     return false;
 }
@@ -203,31 +199,25 @@ void drawDebug() {
 }
 
 // moves a Player2D object given keyboard input
-void movePlayer(Player2D *pl, SDL_Event e) {
+void movePlayer(Player2D *pl, const Uint8* keyStates) {
     Vector2f mdir = pl->GetMoveDir(), pos = pl->position, ldir = pl->GetLookDir();
     float rs = pl->GetRSpeed(), ls = pl->GetLSpeed();
-    SDL_Keycode key;
 
     // tank controls
-    if(e.type == SDL_KEYDOWN){
-        key = e.key.keysym.sym;
-
-        if(key == SDLK_a) {
-            pl->SetMoveDir(fVector2Rotate(mdir, rs));
-            pl->SetLookDir(fVector2Rotate(ldir, rs));
-            cPlane = fVector2Rotate(cPlane, rs);
-        }
-        else if(key == SDLK_d) {
-            pl->SetMoveDir(fVector2Rotate(mdir, -rs));
-            pl->SetLookDir(fVector2Rotate(ldir, -rs));
-            cPlane = fVector2Rotate(cPlane, -rs);
-        }
-
-        if(key == SDLK_w)
-            pl->position = {pos.x + (mdir.x*ls), pos.y + (mdir.y*ls)};
-        if(key == SDLK_s)
-            pl->position = {pos.x - (mdir.x*ls), pos.y - (mdir.y*ls)};
+    if(keyStates[SDL_SCANCODE_A]) {
+        pl->SetMoveDir(fVector2Rotate(mdir, rs));
+        pl->SetLookDir(fVector2Rotate(ldir, rs));
+        cPlane = fVector2Rotate(cPlane, rs);
     }
+    else if(keyStates[SDL_SCANCODE_D]) {
+        pl->SetMoveDir(fVector2Rotate(mdir, -rs));
+        pl->SetLookDir(fVector2Rotate(ldir, -rs));
+        cPlane = fVector2Rotate(cPlane, -rs);
+    }
+    if(keyStates[SDL_SCANCODE_W])
+        pl->position = {pos.x + (mdir.x*ls), pos.y + (mdir.y*ls)};
+    else if(keyStates[SDL_SCANCODE_S])
+        pl->position = {pos.x - (mdir.x*ls), pos.y - (mdir.y*ls)};
 }
 
 //fills rayBuffer given a direction and camera plane.
@@ -326,7 +316,6 @@ void renderView() {
         drawEnd = lineHeight/2+winHeight/2;
         if(drawEnd >= winHeight) drawEnd = winHeight - 1;
 
-        //wallColor = ColorBrightness(wallColorI, -(((float)winHeight/(5.0f*(float)lineHeight)))); // rudimentary lighting based on lineHeight
         wallColor = (rayBuffer[i].side == EW) ? wallColorEW : wallColorNS; // rudimentary lighting based on side
 
         SDL_SetRenderDrawColor(mainRender, wallColor.r, wallColor.g, wallColor.b, wallColor.a);
