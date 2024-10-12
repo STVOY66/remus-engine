@@ -1,5 +1,4 @@
 #pragma once
-#include "raylib.h"
 
 // function to cheaply perform pythagorean addition on two floats.
 double quickHypot(double a, double b); // will likely move to a more generalized personal library.
