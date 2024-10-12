@@ -3,6 +3,14 @@
 
 // ******** SDL color constants ********
 #define BLACK SDL_Color{0, 0, 0, 255}
+#define GRAY SDL_Color{125, 125, 125, 255};
+#define WHITE SDL_Color{255, 255, 255, 255};
+#define RED SDL_Color{255, 0, 0, 255};
+#define DARK_RED SDL_Color{125, 0, 0, 255};
+#define GREEN SDL_Color{0, 255, 0, 255};
+#define DARK_GREEN SDL_Color{0, 125, 0, 255};
+#define BLUE SDL_Color{0, 0, 255, 255};
+#define DARK_BLUE SDL_Color{0, 0, 125, 255};
 
 // ******** Vector2 utilities ********
 
@@ -18,4 +26,5 @@ float fVector2Length(Vector2f);
 // Normalizes 2D Vector
 Vector2f fVector2Normalize(Vector2f);
 
+// Rotates vector by radians
 Vector2f fVector2Rotate(Vector2f, float);

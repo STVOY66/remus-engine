@@ -25,6 +25,11 @@ enum HitType {
     EW
 };
 
+enum RenderType {
+    SURFACE,
+    RENDERER
+};
+
 struct CastRay {
     Vector2f dir;
     double dist;
@@ -35,21 +40,25 @@ std::string testString;
 Player2D player;
 Vector2f cPlane;
 CastRay rayBuffer[winWidth];
+
 SDL_Window* mainWin = NULL;
 SDL_Surface* screenSurface = NULL;
+SDL_Renderer* mainRender = NULL;
 
 //function headers
 void draw();
+void render();
 void update();
 bool eventHandler(SDL_Event);
-bool init();
+bool init(RenderType);
 void close();
 
 void drawPlayer(Player2D);
 void drawRays2D();
-void drawView();
 void draw2DMap(const int*, Vector2f, int);
 void drawDebug();
+
+void renderView();
 
 void movePlayer(Player2D*, SDL_Event);
 void castRays(Vector2f, Vector2f);
@@ -61,26 +70,23 @@ int main(int argc, char **argv) {
     bool quit = false;
     SDL_Event e;
 
-    player = Player2D(Vector2f{200, 120}, Vector2f{-1.0f, 0.0f}, 2.0f, 0.08f);
-    cPlane = Vector2f{0.0f, 0.66f};
-
-    if(!init()) {
+    if(!init(RENDERER)) {
         std::cout << "Program failed to initialize" << std::endl;
         return 0;
     }
 
     std::cout << "Running main loop..." << std::endl;
     while(!quit) {
-        draw();
+        render();
         update();
         quit = eventHandler(e);
     }
 
     close();
-    return 1;
+    return 0;
 }
 
-bool init() {
+bool init(RenderType renderType) {
     bool success = true;
     std::cout << "Initializing SDL..." << std::endl;
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -94,13 +100,27 @@ bool init() {
             success = false;
         }
         else {
-            std::cout << "Getting window surface..." << std::endl;
-            screenSurface = SDL_GetWindowSurface(mainWin);
-            if(screenSurface == NULL) {
-                std::cout << "ERROR: Failed to get surface." << std::endl;
+            if(renderType == SURFACE) {
+                std::cout << "Getting window surface..." << std::endl;
+                screenSurface = SDL_GetWindowSurface(mainWin);
+                if(screenSurface == NULL) {
+                    std::cout << "ERROR: Failed to get surface." << std::endl;
+                }
+            } else if(renderType == RENDERER) {
+                std::cout << "Creating renderer..." << std::endl;
+                mainRender = SDL_CreateRenderer(mainWin, -1, SDL_RENDERER_ACCELERATED);
+                if(mainRender == NULL) {
+                    std::cout << "ERROR: Failed to get renderer." << std::endl;
+                }
             }
+            
+            
         }
     }
+
+    player = Player2D(Vector2f{200, 120}, Vector2f{-1.0f, 0.0f}, 2.0f, 0.08f);
+    cPlane = Vector2f{0.0f, 0.66f};
+
     return success;
 }
 
@@ -110,12 +130,14 @@ void close() {
     SDL_DestroyWindow(mainWin);
     mainWin = NULL;
 
+    SDL_DestroyRenderer(mainRender);
+    mainRender = NULL;
+
     SDL_Quit();
 }
 
 //Handles all draw functions
 void draw() {
-    SDL_UpdateWindowSurface(mainWin);
     // BeginDrawing();
     //     ClearBackground(bgColor);
         //draw2DMap(testmap1, Vector2{8, 8}, mapScale);
@@ -126,9 +148,18 @@ void draw() {
     // EndDrawing();
 }
 
+// handles functions that use a SDL_Renderer
+void render() {
+    SDL_SetRenderDrawColor(mainRender, BLACK.r, BLACK.g, BLACK.b, BLACK.a);
+    SDL_RenderClear(mainRender);
+
+    renderView();
+    SDL_RenderPresent(mainRender);
+}
+
 //Handles all update functions between frames
 void update() {
-    // castRays(player.GetLookDir(), cPlane);
+    castRays(player.GetLookDir(), cPlane);
 }
 
 //Draws player on 2d plane.
@@ -140,8 +171,10 @@ void drawPlayer(Player2D pl) {
 }
 
 bool eventHandler(SDL_Event e) {
-    if(e.type == SDL_QUIT) return true;
-    //movePlayer(&player, e);
+    while(SDL_PollEvent(&e)) {
+        if(e.type == SDL_QUIT) return true;
+        movePlayer(&player, e);
+    }
     return false;
 }
 
@@ -199,67 +232,67 @@ void movePlayer(Player2D *pl, SDL_Event e) {
 
 //fills rayBuffer given a direction and camera plane.
 void castRays(Vector2f dir, Vector2f camPlane) {
-    // double camX; // position on camera plane normalized between -1 and 1
-    // double dDistX, dDistY; // distance from one side to next for each axis
-    // double sideDistX, sideDistY; // distance from current position to ray collision point
-    // Vector2f rayDir; // stores direction of current ray
-    // Vector2f pPos = player.GetMapPos(mapScale); // initial position on the map
-    // int mapX, mapY; // current map square as int
-    // int stepX, stepY; // which direction along the axes
-    // HitType side; // determines whether there was a hit, and whether it was NS or EW
+    double camX; // position on camera plane normalized between -1 and 1
+    double dDistX, dDistY; // distance from one side to next for each axis
+    double sideDistX, sideDistY; // distance from current position to ray collision point
+    Vector2f rayDir; // stores direction of current ray
+    Vector2f pPos = player.GetMapPos(mapScale); // initial position on the map
+    int mapX, mapY; // current map square as int
+    int stepX, stepY; // which direction along the axes
+    HitType side; // determines whether there was a hit, and whether it was NS or EW
 
-    // for(int x = 0; x < winWidth; x++) {
-    //     camX = 2.0*(double(x)/double(winWidth)) - 1.0;
-    //     rayDir = Vector2{dir.x + camPlane.x*float(camX), dir.y + camPlane.y*float(camX)};
-    //     mapX = pPos.x; mapY = pPos.y;
-    //     dDistX = (rayDir.x == 0) ? 1e30 : std::abs(1/rayDir.x);
-    //     dDistY = (rayDir.y == 0) ? 1e30 : std::abs(1/rayDir.y);
+    for(int x = 0; x < winWidth; x++) {
+        camX = 2.0*(double(x)/double(winWidth)) - 1.0;
+        rayDir = Vector2f{dir.x + camPlane.x*float(camX), dir.y + camPlane.y*float(camX)};
+        mapX = pPos.x; mapY = pPos.y;
+        dDistX = (rayDir.x == 0) ? 1e30 : std::abs(1/rayDir.x);
+        dDistY = (rayDir.y == 0) ? 1e30 : std::abs(1/rayDir.y);
 
-    //     //Calculate distance from current pos to edge of current map square, as well as step direction
-    //     if(rayDir.x < 0) {
-    //         stepX = -1;
-    //         sideDistX = (pPos.x - mapX) * dDistX;
-    //     } else {
-    //         stepX = 1;
-    //         sideDistX = (mapX + 1.0 - pPos.x) * dDistX;
-    //     }
-    //     if(rayDir.y < 0) {
-    //         stepY = -1;
-    //         sideDistY = (pPos.y - mapY) * dDistY;
-    //     } else {
-    //         stepY = 1;
-    //         sideDistY = (mapY + 1.0 - pPos.y) * dDistY;
-    //     }
-    //     //DDA
-    //     int hit = 0; // stores whether a map object has been hit
-    //     int currentIndex; // stores 1d index for 2d map coordinates
-    //     while(hit == 0) {
-    //         currentIndex = mapY*8 + mapX;
-    //         if(testmap1[currentIndex] > 0) {
-    //             hit = 1;
-    //             // if hit, rolls back to outer edge of map square
-    //             if(side == EW)
-    //                 sideDistX -= dDistX;
-    //             if(side == NS)
-    //                 sideDistY -= dDistY;
-    //         }
-    //         if(hit == 0) { // only increases distance if no hit
-    //             if(sideDistX < sideDistY) {
-    //                 sideDistX += dDistX;
-    //                 mapX += stepX;
-    //                 side = EW;
-    //             } else {
-    //                 sideDistY += dDistY;
-    //                 mapY += stepY;
-    //                 side = NS;
-    //             }
-    //         }
-    //     }
+        //Calculate distance from current pos to edge of current map square, as well as step direction
+        if(rayDir.x < 0) {
+            stepX = -1;
+            sideDistX = (pPos.x - mapX) * dDistX;
+        } else {
+            stepX = 1;
+            sideDistX = (mapX + 1.0 - pPos.x) * dDistX;
+        }
+        if(rayDir.y < 0) {
+            stepY = -1;
+            sideDistY = (pPos.y - mapY) * dDistY;
+        } else {
+            stepY = 1;
+            sideDistY = (mapY + 1.0 - pPos.y) * dDistY;
+        }
+        //DDA
+        int hit = 0; // stores whether a map object has been hit
+        int currentIndex; // stores 1d index for 2d map coordinates
+        while(hit == 0) {
+            currentIndex = mapY*8 + mapX;
+            if(testmap1[currentIndex] > 0) {
+                hit = 1;
+                // if hit, rolls back to outer edge of map square
+                if(side == EW)
+                    sideDistX -= dDistX;
+                if(side == NS)
+                    sideDistY -= dDistY;
+            }
+            if(hit == 0) { // only increases distance if no hit
+                if(sideDistX < sideDistY) {
+                    sideDistX += dDistX;
+                    mapX += stepX;
+                    side = EW;
+                } else {
+                    sideDistY += dDistY;
+                    mapY += stepY;
+                    side = NS;
+                }
+            }
+        }
 
-    //     side = (sideDistX < sideDistY) ? EW : NS;
+        side = (sideDistX < sideDistY) ? EW : NS;
 
-    //     rayBuffer[x] = CastRay{rayDir, __min(sideDistX, sideDistY), side}; // stores ray in buffer with distance to map object
-    // }
+        rayBuffer[x] = CastRay{rayDir, __min(sideDistX, sideDistY), side}; // stores ray in buffer with distance to map object
+    }
 }
 
 //top-down visualization of ray-casting
@@ -271,26 +304,32 @@ void drawRays2D() {
     // }
 }
 
-void drawView() {
-    // SDL_Color wallColorI = RED; SDL_Color wallColor;
-    // SDL_Color floorColor = DARKGRAY;
-    // SDL_Color ceilColor = BLUE;
-    // int lineHeight;
-    // int drawStart; int drawEnd;
+void renderView() {
+    SDL_Color wallColorEW = RED; SDL_Color wallColorNS = DARK_RED; SDL_Color wallColor;
+    SDL_Color floorColor = GRAY;
+    SDL_Color ceilColor = SDL_Color{59, 242, 255}; // light blue
+    int lineHeight;
+    int drawStart; int drawEnd;
 
-    // DrawRectangle(0, 0, winWidth, winHeight/2, ceilColor);
-    // DrawRectangle(0, winHeight/2, winWidth, winHeight/2, floorColor);
+    SDL_Rect ceiling = SDL_Rect{0, 0, winWidth, winHeight/2};
+    SDL_SetRenderDrawColor(mainRender, ceilColor.r, ceilColor.g, ceilColor.b, ceilColor.a);
+    SDL_RenderFillRect(mainRender, &ceiling);
 
-    // for(int i = 0; i < winWidth; i++) {
-    //     lineHeight = (int)(winHeight/rayBuffer[i].dist);
-    //     drawStart = -lineHeight/2 + winHeight/2;
-    //     if(drawStart < 0) drawStart = 0;
-    //     drawEnd = lineHeight/2+winHeight/2;
-    //     if(drawEnd >= winHeight) drawEnd = winHeight - 1;
+    SDL_Rect floor = SDL_Rect{0, winHeight/2, winWidth, winHeight/2};
+    SDL_SetRenderDrawColor(mainRender, floorColor.r, floorColor.g, floorColor.b, floorColor.a);
+    SDL_RenderFillRect(mainRender, &floor);
 
-    //     //wallColor = ColorBrightness(wallColorI, -(((float)winHeight/(5.0f*(float)lineHeight)))); // rudimentary lighting based on lineHeight
-    //     wallColor = (rayBuffer[i].side == EW) ? ColorBrightness(wallColorI, -0.2f) : wallColorI; // rudimentary lighting based on side
+    for(int i = 0; i < winWidth; i++) {
+        lineHeight = (int)(winHeight/rayBuffer[i].dist);
+        drawStart = -lineHeight/2 + winHeight/2;
+        if(drawStart < 0) drawStart = 0;
+        drawEnd = lineHeight/2+winHeight/2;
+        if(drawEnd >= winHeight) drawEnd = winHeight - 1;
 
-    //     DrawLine(i, drawStart, i, drawEnd, wallColor);
-    // }
+        //wallColor = ColorBrightness(wallColorI, -(((float)winHeight/(5.0f*(float)lineHeight)))); // rudimentary lighting based on lineHeight
+        wallColor = (rayBuffer[i].side == EW) ? wallColorEW : wallColorNS; // rudimentary lighting based on side
+
+        SDL_SetRenderDrawColor(mainRender, wallColor.r, wallColor.g, wallColor.b, wallColor.a);
+        SDL_RenderDrawLine(mainRender, i, drawStart, i, drawEnd);
+    }
 }
