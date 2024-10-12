@@ -1,5 +1,5 @@
 #pragma once
-#include "SDL.h"
+#include "SDL2/SDL.h"
 
 // ******** SDL color constants ********
 #define BLACK SDL_Color{0, 0, 0, 255}
@@ -17,3 +17,5 @@ float fVector2Length(Vector2f);
 
 // Normalizes 2D Vector
 Vector2f fVector2Normalize(Vector2f);
+
+Vector2f fVector2Rotate(Vector2f, float);

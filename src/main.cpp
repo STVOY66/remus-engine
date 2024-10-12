@@ -1,4 +1,4 @@
-#include "SDL.h"
+#include "SDL2/SDL.h"
 #include "player.h"
 #include "sdl2utils.h"
 #include <string>
@@ -35,24 +35,29 @@ std::string testString;
 Player2D player;
 Vector2f cPlane;
 CastRay rayBuffer[winWidth];
-SDL_Window* window = NULL;
+SDL_Window* mainWin = NULL;
 SDL_Surface* screenSurface = NULL;
 
 //function headers
-void draw(SDL_Color);
-void drawPlayer(Player2D);
-void drawRays2D();
-void drawView();
-void update(SDL_Event*);
-void movePlayer(Player2D*);
-void draw2DMap(const int*, Vector2f, int);
-void drawDebug();
-void castRays(Vector2f, Vector2f);
+void draw();
+void update();
+bool eventHandler(SDL_Event);
 bool init();
 void close();
 
-int main() {
+void drawPlayer(Player2D);
+void drawRays2D();
+void drawView();
+void draw2DMap(const int*, Vector2f, int);
+void drawDebug();
+
+void movePlayer(Player2D*, SDL_Event);
+void castRays(Vector2f, Vector2f);
+
+
+int main(int argc, char **argv) {
     //InitWindow(winWidth, winHeight, "Remus Engine");
+    std::cout << "Executing program..." << std::endl;
     bool quit = false;
     SDL_Event e;
 
@@ -64,44 +69,53 @@ int main() {
         return 0;
     }
 
+    std::cout << "Running main loop..." << std::endl;
     while(!quit) {
         draw();
-        while(SDL_PollEvent(&e) != 0) {
-            update(&e);
-            if(e.type == SDL_QUIT) quit = true;
-        }
+        update();
+        quit = eventHandler(e);
     }
 
     close();
+    return 1;
 }
 
 bool init() {
     bool success = true;
+    std::cout << "Initializing SDL..." << std::endl;
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cout << "You fucked up, SDL failed to initialize." << std::endl;
+        std::cout << "ERROR: SDL failed to initialize." << std::endl;
         success = false;
     } else {
-        window = SDL_CreateWindow("Remus Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, winWidth, winHeight, SDL_WINDOW_SHOWN);
-        if(window == NULL) {
-            std::cout << "You fucked up, window failed to be created." << std::endl;
+        std::cout << "Creating window..." << std::endl;
+        mainWin = SDL_CreateWindow("Remus Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, winWidth, winHeight, SDL_WINDOW_SHOWN);
+        if(mainWin == NULL) {
+            std::cout << "ERROR: Window failed to be created." << std::endl;
             success = false;
         }
         else {
-            screenSurface = SDL_GetWindowSurface(window);
+            std::cout << "Getting window surface..." << std::endl;
+            screenSurface = SDL_GetWindowSurface(mainWin);
+            if(screenSurface == NULL) {
+                std::cout << "ERROR: Failed to get surface." << std::endl;
+            }
         }
     }
     return success;
 }
 
 void close() {
-    SDL_DestroyWindow(window);
-    window = NULL;
+    std::cout << "Closing program..." << std::endl;
+
+    SDL_DestroyWindow(mainWin);
+    mainWin = NULL;
 
     SDL_Quit();
 }
 
 //Handles all draw functions
 void draw() {
+    SDL_UpdateWindowSurface(mainWin);
     // BeginDrawing();
     //     ClearBackground(bgColor);
         //draw2DMap(testmap1, Vector2{8, 8}, mapScale);
@@ -113,8 +127,7 @@ void draw() {
 }
 
 //Handles all update functions between frames
-void update(SDL_Event* e) {
-    // movePlayer(&player, &e);
+void update() {
     // castRays(player.GetLookDir(), cPlane);
 }
 
@@ -124,6 +137,12 @@ void drawPlayer(Player2D pl) {
     //DrawLine(pl.position.x, pl.position.y, pl.position.x + pl.GetMoveDir().x*mapScale, pl.position.y + pl.GetMoveDir().y*mapScale, BLUE);
     //visualize player on 2d plane.
     //DrawCircle(pl.position.x, pl.position.y, 8.0f, RED);
+}
+
+bool eventHandler(SDL_Event e) {
+    if(e.type == SDL_QUIT) return true;
+    //movePlayer(&player, e);
+    return false;
 }
 
 //top-down visualization of map
@@ -151,26 +170,31 @@ void drawDebug() {
 }
 
 // moves a Player2D object given keyboard input
-void movePlayer(Player2D *pl) {
-    // Vector2f mdir = pl->GetMoveDir(), pos = pl->position, ldir = pl->GetLookDir();
-    // float rs = pl->GetRSpeed(), ls = pl->GetLSpeed();
+void movePlayer(Player2D *pl, SDL_Event e) {
+    Vector2f mdir = pl->GetMoveDir(), pos = pl->position, ldir = pl->GetLookDir();
+    float rs = pl->GetRSpeed(), ls = pl->GetLSpeed();
+    SDL_Keycode key;
 
     // tank controls
-    // if(IsKeyDown(KEY_A)) {
-    //     pl->SetMoveDir(Vector2Rotate(mdir, rs));
-    //     pl->SetLookDir(Vector2Rotate(ldir, rs));
-    //     cPlane = Vector2Rotate(cPlane, rs);
-    // }
-    // else if(IsKeyDown(KEY_D)) {
-    //     pl->SetMoveDir(Vector2Rotate(mdir, -rs));
-    //     pl->SetLookDir(Vector2Rotate(ldir, -rs));
-    //     cPlane = Vector2Rotate(cPlane, -rs);
-    // }
+    if(e.type == SDL_KEYDOWN){
+        key = e.key.keysym.sym;
 
-    // if(IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
-    //     pl->position = {pos.x + (mdir.x*ls), pos.y + (mdir.y*ls)};
-    // if(IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
-    //     pl->position = {pos.x - (mdir.x*ls), pos.y - (mdir.y*ls)};
+        if(key == SDLK_a) {
+            pl->SetMoveDir(fVector2Rotate(mdir, rs));
+            pl->SetLookDir(fVector2Rotate(ldir, rs));
+            cPlane = fVector2Rotate(cPlane, rs);
+        }
+        else if(key == SDLK_d) {
+            pl->SetMoveDir(fVector2Rotate(mdir, -rs));
+            pl->SetLookDir(fVector2Rotate(ldir, -rs));
+            cPlane = fVector2Rotate(cPlane, -rs);
+        }
+
+        if(key == SDLK_w)
+            pl->position = {pos.x + (mdir.x*ls), pos.y + (mdir.y*ls)};
+        if(key == SDLK_s)
+            pl->position = {pos.x - (mdir.x*ls), pos.y - (mdir.y*ls)};
+    }
 }
 
 //fills rayBuffer given a direction and camera plane.

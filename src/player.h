@@ -1,4 +1,5 @@
 #pragma once
+#include "sdl2utils.h"
 
 // class for a player in 2-Dimensional space.
 class Player2D {
