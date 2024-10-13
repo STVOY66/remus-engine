@@ -22,8 +22,7 @@ class Player2D {
         void SetLSpeed(float speed);
         float GetRSpeed();
         void SetRSpeed(float speed);
-        //calculate map square position based on scale of map
-        Vector2f GetMapPos(int scale);
+
     private:
         float lSpeed; // linear speed
         float rSpeed; // rotational speed

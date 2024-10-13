@@ -18,7 +18,6 @@ const int testmap1[] =
  1, 0, 0, 0, 0, 0, 0, 1,
  1, 1, 0, 0, 0, 0, 1, 1,
  1, 1, 1, 1, 1, 1, 1, 1};
-const int mapScale = 80;
 
 enum HitType {
     NS,
@@ -125,7 +124,7 @@ bool init(RenderType renderType) {
         }
     }
 
-    player = Player2D(Vector2f{200, 120}, Vector2f{-1.0f, 0.0f}, 2.0f, 0.08f);
+    player = Player2D(Vector2f{mapDim.x/2, mapDim.y/2}, Vector2f{-1.0f, 0.0f}, 0.05f, 0.05f);
     cPlane = Vector2f{0.0f, 0.66f};
 
     return success;
@@ -226,7 +225,7 @@ void castRays(Vector2f dir, Vector2f camPlane) {
     double dDistX, dDistY; // distance from one side to next for each axis
     double sideDistX, sideDistY; // distance from current position to ray collision point
     Vector2f rayDir; // stores direction of current ray
-    Vector2f pPos = player.GetMapPos(mapScale); // initial position on the map
+    Vector2f pPos = player.position; // initial position on the map
     int mapX, mapY; // current map square as int
     int stepX, stepY; // which direction along the axes
     HitType side; // determines whether there was a hit, and whether it was NS or EW

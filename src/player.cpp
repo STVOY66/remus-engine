@@ -67,7 +67,3 @@ float Player2D::GetRSpeed() {
 void Player2D::SetRSpeed(float speed) {
     rSpeed = speed;
 }
-
-Vector2f Player2D::GetMapPos(int scale) {
-    return {position.x / scale, position.y / scale};
-}
