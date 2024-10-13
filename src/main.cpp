@@ -79,7 +79,6 @@ int main(int argc, char **argv) {
         ticks1 = SDL_GetTicks64();
         deltaTime = ticks1 - ticks2;
         if(deltaTime > 1000.0f/float(FPS)) {
-            std::cout << "fps: " << 1000.0/deltaTime << std::endl;
             quit = eventHandler(e);
             render();
             update();
@@ -155,7 +154,7 @@ void render() {
 void update() {
     const Uint8* currKeyStates = SDL_GetKeyboardState(NULL);
     movePlayer(&player, currKeyStates);
-    castRays(player.GetLookDir(), cPlane);
+    castRays(player.GetDir(), cPlane);
 }
 
 //Draws player on 2d plane.
@@ -199,24 +198,22 @@ void drawDebug() {
 
 // moves a Player2D object given keyboard input
 void movePlayer(Player2D *pl, const Uint8* keyStates) {
-    Vector2f mdir = pl->GetMoveDir(), pos = pl->position, ldir = pl->GetLookDir();
+    Vector2f dir = pl->GetDir(), pos = pl->position;
     float rs = pl->GetRSpeed(), ls = pl->GetLSpeed();
 
     // tank controls
     if(keyStates[SDL_SCANCODE_A]) {
-        pl->SetMoveDir(fVector2Rotate(mdir, rs));
-        pl->SetLookDir(fVector2Rotate(ldir, rs));
+        pl->SetDir(fVector2Rotate(dir, rs));
         cPlane = fVector2Rotate(cPlane, rs);
     }
     else if(keyStates[SDL_SCANCODE_D]) {
-        pl->SetMoveDir(fVector2Rotate(mdir, -rs));
-        pl->SetLookDir(fVector2Rotate(ldir, -rs));
+        pl->SetDir(fVector2Rotate(dir, -rs));
         cPlane = fVector2Rotate(cPlane, -rs);
     }
     if(keyStates[SDL_SCANCODE_W])
-        pl->position = {pos.x + (mdir.x*ls), pos.y + (mdir.y*ls)};
+        pl->position = {pos.x + (dir.x*ls), pos.y + (dir.y*ls)};
     else if(keyStates[SDL_SCANCODE_S])
-        pl->position = {pos.x - (mdir.x*ls), pos.y - (mdir.y*ls)};
+        pl->position = {pos.x - (dir.x*ls), pos.y - (dir.y*ls)};
 }
 
 //fills rayBuffer given a direction and camera plane.

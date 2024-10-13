@@ -11,21 +11,16 @@ class Player2D {
 
         Vector2f position; // position of player in 2d space
 
-        // gets/sets for look direction, set returns an int for error-handling
-        Vector2f GetLookDir();
-        void SetLookDir(Vector2f dir);
         // gets/sets for move direction
-        Vector2f GetMoveDir();
-        void SetMoveDir(Vector2f dir);
+        Vector2f GetDir();
+        void SetDir(Vector2f dir);
         // gets/sets for linear and rotational speed
         float GetLSpeed();
         void SetLSpeed(float speed);
         float GetRSpeed();
         void SetRSpeed(float speed);
-
     private:
         float lSpeed; // linear speed
         float rSpeed; // rotational speed
-        Vector2f ldir; // direction player's facing as a 2d unit vector
-        Vector2f mdir; // direction player's moving as a 2d unit vector (Idea to deal with collisions)
+        Vector2f dir; // direction player's facing as a 2d unit vector
 };
