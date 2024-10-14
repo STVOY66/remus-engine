@@ -8,7 +8,7 @@
 const unsigned winWidth = 800;
 const unsigned winHeight = 600;
 const unsigned FPS = 60;
-const Vector2f mapDim = {8, 8};
+const Vector2i mapDim = {8, 8};
 const int testmap1[] = 
 {1, 1, 1, 1, 1, 1, 1, 1,
  1, 1, 0, 0, 0, 0, 1, 1,
@@ -50,6 +50,8 @@ void update();
 bool eventHandler(SDL_Event);
 bool init(RenderType);
 void close();
+
+int getMapVal(int*, Vector2i, int, int);
 
 void drawPlayer(Player2D);
 void drawRays2D();
@@ -123,7 +125,7 @@ bool init(RenderType renderType) {
         }
     }
 
-    player = Player2D(Vector2f{mapDim.x/2, mapDim.y/2}, Vector2f{-1.0f, 0.0f}, 0.05f, 0.05f);
+    player = Player2D(Vector2f{float(mapDim.x)/2.0, float(mapDim.y)/2.0}, Vector2f{-1.0f, 0.0f}, 0.05f, 0.05f);
     cPlane = Vector2f{0.0f, 0.66f};
 
     return success;
@@ -155,6 +157,10 @@ void update() {
     const Uint8* currKeyStates = SDL_GetKeyboardState(NULL);
     movePlayer(&player, currKeyStates);
     castRays(player.GetDir(), cPlane);
+}
+
+int getMapVal(int* map, Vector2i dim, int x, int y) {
+    return map[y*dim.x + x];
 }
 
 //Draws player on 2d plane.
@@ -198,8 +204,8 @@ void drawDebug() {
 
 // moves a Player2D object given keyboard input
 void movePlayer(Player2D *pl, const Uint8* keyStates) {
-    Vector2f dir = pl->GetDir(), pos = pl->position;
-    float rs = pl->GetRSpeed(), ls = pl->GetLSpeed();
+    Vector2f dir = pl->GetDir(), pos = pl->position, newpos;
+    float rs = pl->GetRSpeed(), ls = pl->GetLSpeed(), newX, newY;
 
     // tank controls
     if(keyStates[SDL_SCANCODE_A]) {
@@ -210,10 +216,19 @@ void movePlayer(Player2D *pl, const Uint8* keyStates) {
         pl->SetDir(fVector2Rotate(dir, -rs));
         cPlane = fVector2Rotate(cPlane, -rs);
     }
-    if(keyStates[SDL_SCANCODE_W])
-        pl->position = {pos.x + (dir.x*ls), pos.y + (dir.y*ls)};
-    else if(keyStates[SDL_SCANCODE_S])
-        pl->position = {pos.x - (dir.x*ls), pos.y - (dir.y*ls)};
+
+    dir = pl->GetDir();
+
+    if(keyStates[SDL_SCANCODE_W]) {
+        newX = (testmap1[int(pos.y)*mapDim.x + int(pos.x + dir.x*ls)] > 0) ? pos.x : pos.x + (dir.x*ls);
+        newY = (testmap1[int(pos.y + dir.y*ls)*mapDim.x + int(pos.x)] > 0) ? pos.y : pos.y + (dir.y*ls);
+        pl->position = {newX, newY};
+    }
+    else if(keyStates[SDL_SCANCODE_S]) {
+        newX = (testmap1[int(pos.y)*mapDim.x + int(pos.x - dir.x*ls)] > 0) ? pos.x : pos.x - (dir.x*ls);
+        newY = (testmap1[int(pos.y - dir.y*ls)*mapDim.x + int(pos.x)] > 0) ? pos.y : pos.y - (dir.y*ls);
+        pl->position = {newX, newY};
+    }
 }
 
 //fills rayBuffer given a direction and camera plane.

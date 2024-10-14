@@ -20,6 +20,11 @@ struct Vector2f {
     float y;
 };
 
+struct Vector2i {
+    int x;
+    int y;
+};
+
 // Returns length of 2D Vector
 float fVector2Length(Vector2f);
 
