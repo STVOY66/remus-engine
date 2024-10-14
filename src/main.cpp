@@ -1,8 +1,10 @@
 #include "SDL2/SDL.h"
+#include "SDL2/SDL_image.h"
 #include "player.h"
 #include "sdl2utils.h"
 #include <string>
 #include <iostream>
+#include <vector>
 
 //constant values
 const unsigned winWidth = 800;
@@ -39,6 +41,7 @@ std::string testString;
 Player2D player;
 Vector2f cPlane;
 CastRay rayBuffer[winWidth];
+std::vector<SDL_Surface> textures;
 
 SDL_Window* mainWin = NULL;
 SDL_Surface* screenSurface = NULL;
@@ -49,6 +52,7 @@ void render();
 void update();
 bool eventHandler(SDL_Event);
 bool init(RenderType);
+bool init_lib();
 void close();
 
 int getMapVal(int*, Vector2i, int, int);
@@ -95,6 +99,7 @@ int main(int argc, char **argv) {
 
 bool init(RenderType renderType) {
     bool success = true;
+
     std::cout << "Initializing SDL..." << std::endl;
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cout << "ERROR: SDL failed to initialize." << std::endl;
@@ -107,21 +112,24 @@ bool init(RenderType renderType) {
             success = false;
         }
         else {
-            if(renderType == SURFACE) {
-                std::cout << "Getting window surface..." << std::endl;
-                screenSurface = SDL_GetWindowSurface(mainWin);
-                if(screenSurface == NULL) {
-                    std::cout << "ERROR: Failed to get surface." << std::endl;
-                }
-            } else if(renderType == RENDERER) {
-                std::cout << "Creating renderer..." << std::endl;
-                mainRender = SDL_CreateRenderer(mainWin, -1, SDL_RENDERER_ACCELERATED);
-                if(mainRender == NULL) {
-                    std::cout << "ERROR: Failed to get renderer." << std::endl;
+            if(!init_lib()) {
+                std::cout << "ERROR: Failed to initialize SDL extensions."
+                success = false;
+            } else {
+                if(renderType == SURFACE) {
+                    std::cout << "Getting window surface..." << std::endl;
+                    screenSurface = SDL_GetWindowSurface(mainWin);
+                    if(screenSurface == NULL) {
+                        std::cout << "ERROR: Failed to get surface." << std::endl;
+                    }
+                } else if(renderType == RENDERER) {
+                    std::cout << "Creating renderer..." << std::endl;
+                    mainRender = SDL_CreateRenderer(mainWin, -1, SDL_RENDERER_ACCELERATED);
+                    if(mainRender == NULL) {
+                        std::cout << "ERROR: Failed to get renderer." << std::endl;
+                    }
                 }
             }
-            
-            
         }
     }
 
@@ -129,6 +137,16 @@ bool init(RenderType renderType) {
     cPlane = Vector2f{0.0f, 0.66f};
 
     return success;
+}
+
+bool init_lib() {
+    int img_flags = IMG_INIT_JPG;
+    if(!(IMG_Init(img_flags) & img_flags)) {
+        std::cout << "ERROR: SDL_image failed to initialize." << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
 void close() {
