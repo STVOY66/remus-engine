@@ -343,6 +343,11 @@ void renderView() {
     SDL_Color wallColorEW = RED; SDL_Color wallColorNS = DARK_RED; SDL_Color wallColor;
     SDL_Color floorColor = GRAY;
     SDL_Color ceilColor = SDL_Color{59, 242, 255}; // light blue
+    SDL_Texture* currTex = NULL;
+    SDL_Rect source, dest;
+    CastRay currentRay;
+    Vector2i texDim;
+    int mapVal, texX;
     int lineHeight;
     int drawStart; int drawEnd;
 
@@ -355,7 +360,8 @@ void renderView() {
     SDL_RenderFillRect(mainRender, &floor);
 
     for(int i = 0; i < winWidth; i++) {
-        CastRay currentRay = rayBuffer[i];
+        currentRay = rayBuffer[i];
+        mapVal = testmap1[currentRay.mapI];
         
         lineHeight = (int)(winHeight/currentRay.dist);
         drawStart = -lineHeight/2 + winHeight/2;
@@ -363,9 +369,18 @@ void renderView() {
         drawEnd = lineHeight/2+winHeight/2;
         if(drawEnd >= winHeight) drawEnd = winHeight - 1;
 
-        if(testmap1[currentRay.mapI] <= wallTexs->cache.size()) {
-            int texWidth;
-            int texX = int(currentRay.wallX * double());
+        if(mapVal <= wallTexs->cache.size() && mapVal > 0) {
+            currTex = wallTexs->atIndex(mapVal - 1).second;
+            texDim = wallTexs->getDim(mapVal - 1);
+            dest = {i, drawStart, 1, drawEnd - drawStart};
+
+            texX = int(currentRay.wallX * double(texDim.x));
+            if(currentRay.side == EW && currentRay.dir.x > 0) texX = texDim.x - texX - 1;
+            if(currentRay.side == NS && currentRay.dir.y < 0) texX = texDim.x - texX - 1;
+            source = {texX, 0, 1, texDim.y};
+
+            SDL_RenderCopy(mainRender, currTex, &source, &dest);
+
         } else {
             wallColor = (currentRay.side == EW) ? wallColorEW : wallColorNS; // rudimentary lighting based on side
 
