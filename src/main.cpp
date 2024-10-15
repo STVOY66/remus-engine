@@ -41,7 +41,7 @@ std::string testString;
 Player2D player;
 Vector2f cPlane;
 CastRay rayBuffer[winWidth];
-std::vector<SDL_Surface> textures;
+std::vector<SDL_Surface*> textures;
 
 SDL_Window* mainWin = NULL;
 SDL_Surface* screenSurface = NULL;
@@ -52,10 +52,9 @@ void render();
 void update();
 bool eventHandler(SDL_Event);
 bool init(RenderType);
-bool init_lib();
+bool initLibs();
+void loadTextures();
 void close();
-
-int getMapVal(int*, Vector2i, int, int);
 
 void drawPlayer(Player2D);
 void drawRays2D();
@@ -112,8 +111,9 @@ bool init(RenderType renderType) {
             success = false;
         }
         else {
-            if(!init_lib()) {
-                std::cout << "ERROR: Failed to initialize SDL extensions."
+            std::cout << "Initializing SDL extensions..." << std::endl;
+            if(!initLibs()) {
+                std::cout << "ERROR: Failed to initialize SDL extensions.";
                 success = false;
             } else {
                 if(renderType == SURFACE) {
@@ -139,7 +139,7 @@ bool init(RenderType renderType) {
     return success;
 }
 
-bool init_lib() {
+bool initLibs() {
     int img_flags = IMG_INIT_JPG;
     if(!(IMG_Init(img_flags) & img_flags)) {
         std::cout << "ERROR: SDL_image failed to initialize." << std::endl;
@@ -175,10 +175,6 @@ void update() {
     const Uint8* currKeyStates = SDL_GetKeyboardState(NULL);
     movePlayer(&player, currKeyStates);
     castRays(player.GetDir(), cPlane);
-}
-
-int getMapVal(int* map, Vector2i dim, int x, int y) {
-    return map[y*dim.x + x];
 }
 
 //Draws player on 2d plane.

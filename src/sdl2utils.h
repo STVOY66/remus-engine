@@ -1,5 +1,11 @@
 #pragma once
 #include "SDL2/SDL.h"
+#include <filesystem>
+#include <vector>
+#include <string>
+#include <map>
+
+namespace fs = std::filesystem;
 
 // ******** SDL color constants ********
 #define BLACK SDL_Color{0, 0, 0, 255}
@@ -33,3 +39,23 @@ Vector2f fVector2Normalize(Vector2f);
 
 // Rotates vector by radians
 Vector2f fVector2Rotate(Vector2f, float);
+
+// Class for image storage
+class ImgCache {
+    public:
+        std::map<std::string, SDL_Surface*> cache;
+
+        ImgCache();
+        ImgCache(int);
+        ImgCache(std::string, int);
+        ~ImgCache();
+
+        void loadDir(fs::path);
+        void loadImage(fs::path);
+    private:
+        std::vector<std::string> filetypes;
+        unsigned int flags;
+
+        void flush();
+        void flag2str();
+};
