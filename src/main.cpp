@@ -85,8 +85,6 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    std::cout << wallTexs->getDim(0).x << std::endl;
-
     std::cout << "Running main loop..." << std::endl;
     while(!quit) {
         ticks1 = SDL_GetTicks64();
@@ -153,7 +151,6 @@ bool initLibs() {
     if(!(IMG_Init(img_flags) & img_flags)) {
         std::cout << "ERROR: SDL_image failed to initialize." << std::endl;
         return false;
-    } else {
     }
 
     return true;
@@ -246,15 +243,16 @@ void movePlayer(Player2D *pl, const Uint8* keyStates) {
     }
 
     dir = pl->GetDir();
+    float offWall = 10.0f;
 
     if(keyStates[SDL_SCANCODE_W]) {
-        newX = (testmap1[int(pos.y)*mapDim.x + int(pos.x + dir.x*ls)] > 0) ? pos.x : pos.x + (dir.x*ls);
-        newY = (testmap1[int(pos.y + dir.y*ls)*mapDim.x + int(pos.x)] > 0) ? pos.y : pos.y + (dir.y*ls);
+        newX = (testmap1[int(pos.y)*mapDim.x + int(pos.x + dir.x*ls*offWall)] > 0) ? pos.x : pos.x + (dir.x*ls);
+        newY = (testmap1[int(pos.y + dir.y*ls*offWall)*mapDim.x + int(pos.x)] > 0) ? pos.y : pos.y + (dir.y*ls);
         pl->position = {newX, newY};
     }
     else if(keyStates[SDL_SCANCODE_S]) {
-        newX = (testmap1[int(pos.y)*mapDim.x + int(pos.x - dir.x*ls)] > 0) ? pos.x : pos.x - (dir.x*ls);
-        newY = (testmap1[int(pos.y - dir.y*ls)*mapDim.x + int(pos.x)] > 0) ? pos.y : pos.y - (dir.y*ls);
+        newX = (testmap1[int(pos.y)*mapDim.x + int(pos.x - dir.x*ls*offWall)] > 0) ? pos.x : pos.x - (dir.x*ls);
+        newY = (testmap1[int(pos.y - dir.y*ls*offWall)*mapDim.x + int(pos.x)] > 0) ? pos.y : pos.y - (dir.y*ls);
         pl->position = {newX, newY};
     }
 }
@@ -347,8 +345,8 @@ void renderView() {
     SDL_Rect source, dest;
     CastRay currentRay;
     Vector2i texDim;
-    int mapVal, texX;
-    int lineHeight;
+    int mapVal, texX, texY;
+    int lineHeight, deltaHeight = 0, offset, texH;
     int drawStart; int drawEnd;
 
     SDL_Rect ceiling = SDL_Rect{0, 0, winWidth, winHeight/2};
@@ -368,16 +366,19 @@ void renderView() {
         if(drawStart < 0) drawStart = 0;
         drawEnd = lineHeight/2+winHeight/2;
         if(drawEnd >= winHeight) drawEnd = winHeight - 1;
+        deltaHeight = (lineHeight > winHeight) ? lineHeight - winHeight : 0;
 
         if(mapVal <= wallTexs->cache.size() && mapVal > 0) {
             currTex = wallTexs->atIndex(mapVal - 1).second;
             texDim = wallTexs->getDim(mapVal - 1);
+            texH = (deltaHeight) ? int((float(winHeight)/float(lineHeight))*float(texDim.y)) : texDim.y;
             dest = {i, drawStart, 1, drawEnd - drawStart};
+            texY = (deltaHeight) ? (drawStart-winHeight/2 + lineHeight/2) * texDim.y/lineHeight : 0;
 
             texX = int(currentRay.wallX * double(texDim.x));
-            if(currentRay.side == EW && currentRay.dir.x > 0) texX = texDim.x - texX - 1;
-            if(currentRay.side == NS && currentRay.dir.y < 0) texX = texDim.x - texX - 1;
-            source = {texX, 0, 1, texDim.y};
+            if((currentRay.side == EW && currentRay.dir.x > 0) ||
+               (currentRay.side == NS && currentRay.dir.y < 0)) texX = texDim.x - texX - 1;
+            source = {texX, texY, 1, texH};
 
             SDL_RenderCopy(mainRender, currTex, &source, &dest);
 
