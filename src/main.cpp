@@ -20,6 +20,8 @@ const int testmap1[] =
  1, 0, 0, 0, 0, 0, 0, 1,
  1, 1, 0, 0, 0, 0, 1, 1,
  1, 1, 1, 1, 1, 1, 1, 1};
+const int img_flags = IMG_INIT_JPG;
+const std::string resourceDir = "./resources";
 
 enum HitType {
     NS,
@@ -42,6 +44,7 @@ Player2D player;
 Vector2f cPlane;
 CastRay rayBuffer[winWidth];
 std::vector<SDL_Surface*> textures;
+TexCache *wallTexs = NULL;
 
 SDL_Window* mainWin = NULL;
 SDL_Surface* screenSurface = NULL;
@@ -127,6 +130,8 @@ bool init(RenderType renderType) {
                     mainRender = SDL_CreateRenderer(mainWin, -1, SDL_RENDERER_ACCELERATED);
                     if(mainRender == NULL) {
                         std::cout << "ERROR: Failed to get renderer." << std::endl;
+                    } else {
+                        wallTexs = new TexCache(mainRender, resourceDir, img_flags);
                     }
                 }
             }
@@ -140,10 +145,10 @@ bool init(RenderType renderType) {
 }
 
 bool initLibs() {
-    int img_flags = IMG_INIT_JPG;
     if(!(IMG_Init(img_flags) & img_flags)) {
         std::cout << "ERROR: SDL_image failed to initialize." << std::endl;
         return false;
+    } else {
     }
 
     return true;
@@ -151,6 +156,9 @@ bool initLibs() {
 
 void close() {
     std::cout << "Closing program..." << std::endl;
+
+    wallTexs->flush();
+    wallTexs = NULL;
 
     SDL_DestroyWindow(mainWin);
     mainWin = NULL;
@@ -167,6 +175,7 @@ void render() {
     SDL_RenderClear(mainRender);
 
     renderView();
+
     SDL_RenderPresent(mainRender);
 }
 

@@ -24,17 +24,20 @@ Vector2f fVector2Rotate(Vector2f vector, float amt) {
     return output;
 }
 
-ImgCache::ImgCache() {
+TexCache::TexCache(SDL_Renderer* renderer) {
+    this->programRender = renderer;
     this->flags = IMG_INIT_JPG;
     flag2str();
 }
 
-ImgCache::ImgCache(int flags) {
+TexCache::TexCache(SDL_Renderer* renderer, int flags) {
+    this->programRender = renderer;
     this->flags = (flags > 63) ? IMG_INIT_JPG : flags;
     flag2str();
 }
 
-ImgCache::ImgCache(std::string path, int flags) {
+TexCache::TexCache(SDL_Renderer* renderer, std::string path, int flags) {
+    this->programRender = renderer;
     this->flags = (flags > 63) ? IMG_INIT_JPG : flags;
     flag2str();
 
@@ -58,35 +61,37 @@ ImgCache::ImgCache(std::string path, int flags) {
     }
 }
 
-ImgCache::~ImgCache() {
+TexCache::~TexCache() {
     flush();
 }
 
-void ImgCache::loadImage(fs::path workPath) {
+void TexCache::loadImage(fs::path workPath) {
     bool supported = false;
     std::string pathExt = workPath.extension().string();
     if(cache.find(workPath.filename().string()) == cache.end()){
+        std::cout << "Loading " << workPath << " into cache..." << std::endl;
         for(std::string ext : filetypes) {
             if(pathExt == ext) { supported = true; break; }
         }
 
         if(supported) {
-            cache.insert({workPath.filename().string(), IMG_Load(workPath.string().c_str())});
-            std::cout << workPath.string() << " loaded successfully." << std::endl;
+            cache.insert({workPath.filename().string(), IMG_LoadTexture(programRender, workPath.string().c_str())});
+            std::cout << workPath << " loaded successfully." << std::endl;
         } else {
             std::cout << "ERROR: Filetype \"" << pathExt << "\" not supported." << std::endl;
         }
     }
 }
 
-void ImgCache::loadDir(fs::path workPath) {
+void TexCache::loadDir(fs::path workPath) {
     std::cout << "Loading directory \"" << workPath.string() << "\" into image cache..." << std::endl;
-    for( fs::directory_entry file : fs::directory_iterator(workPath) ) {
-        loadImage(file.path());
+    for( fs::directory_entry entry : fs::directory_iterator(workPath) ) {
+        if(fs::is_directory(entry)) loadDir(entry.path());
+        else loadImage(entry.path());
     }
 }
 
-void ImgCache::flag2str() {
+void TexCache::flag2str() {
     if(flags & IMG_INIT_JPG) { filetypes.push_back(".jpg"); filetypes.push_back(".jpeg"); }
     if(flags & IMG_INIT_PNG) { filetypes.push_back(".png"); }
     if(flags & IMG_INIT_TIF) { filetypes.push_back(".tif"); filetypes.push_back(".tiff");}
@@ -95,9 +100,10 @@ void ImgCache::flag2str() {
     if(flags & IMG_INIT_AVIF) { filetypes.push_back(".avif"); filetypes.push_back(".avifs"); }
 }
 
-void ImgCache::flush() {
-    std::map<std::string, SDL_Surface*>::iterator i = cache.begin();
+void TexCache::flush() {
+    std::cout << "Flushing image cache..." << std::endl;
+    std::map<std::string, SDL_Texture*>::iterator i = cache.begin();
     for(;i != cache.end(); i++)
-        SDL_FreeSurface(i->second);
+        SDL_DestroyTexture(i->second);
     cache.clear();
 }
