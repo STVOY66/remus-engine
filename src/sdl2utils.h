@@ -52,6 +52,13 @@ class TexCache {
 
         void loadDir(fs::path);
         void loadImage(fs::path);
+        int getWidth(std::string);
+        int getWidth(int);
+        int getHeight(std::string);
+        int getHeight(int);
+        Vector2i getDim(int);
+        Vector2i getDim(std::string);
+        std::pair<std::string, SDL_Texture*> atIndex(int);
         void flush();
     private:
         std::vector<std::string> filetypes;

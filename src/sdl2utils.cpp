@@ -100,6 +100,42 @@ void TexCache::flag2str() {
     if(flags & IMG_INIT_AVIF) { filetypes.push_back(".avif"); filetypes.push_back(".avifs"); }
 }
 
+int TexCache::getWidth(int index) {
+    return getWidth(atIndex(index).first);
+}
+
+int TexCache::getWidth(std::string key) {
+    int output;
+    SDL_QueryTexture(cache.at(key), NULL, NULL, &output, NULL);
+    return output;
+}
+
+int TexCache::getHeight(int index) {
+    return getHeight(atIndex(index).first);
+}
+
+int TexCache::getHeight(std::string key) {
+    int output;
+    SDL_QueryTexture(cache.at(key), NULL, NULL, NULL, &output);
+    return output;
+}
+
+Vector2i TexCache::getDim(int index) {
+    return getDim(atIndex(index).first);
+}
+
+Vector2i TexCache::getDim(std::string key) {
+    Vector2i output;
+    SDL_QueryTexture(cache.at(key), NULL, NULL, &output.x, &output.y);
+    return output;
+}
+
+std::pair<std::string, SDL_Texture*> TexCache::atIndex(int index) {
+    auto it = cache.begin();
+    std::advance(it, index);
+    return *it;
+}
+
 void TexCache::flush() {
     std::cout << "Flushing image cache..." << std::endl;
     std::map<std::string, SDL_Texture*>::iterator i = cache.begin();

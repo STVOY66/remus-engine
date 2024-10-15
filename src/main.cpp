@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <vector>
+#include <cmath>
 
 //constant values
 const unsigned winWidth = 800;
@@ -37,6 +38,8 @@ struct CastRay {
     Vector2f dir;
     double dist;
     HitType side;
+    int mapI;
+    double wallX;
 };
 
 std::string testString;
@@ -81,6 +84,8 @@ int main(int argc, char **argv) {
         std::cout << "Program failed to initialize" << std::endl;
         return 0;
     }
+
+    std::cout << wallTexs->getDim(0).x << std::endl;
 
     std::cout << "Running main loop..." << std::endl;
     while(!quit) {
@@ -258,7 +263,7 @@ void movePlayer(Player2D *pl, const Uint8* keyStates) {
 void castRays(Vector2f dir, Vector2f camPlane) {
     double camX; // position on camera plane normalized between -1 and 1
     double dDistX, dDistY; // distance from one side to next for each axis
-    double sideDistX, sideDistY; // distance from current position to ray collision point
+    double sideDistX, sideDistY, wallDist; // distance from current position to ray collision point
     Vector2f rayDir; // stores direction of current ray
     Vector2f pPos = player.position; // initial position on the map
     int mapX, mapY; // current map square as int
@@ -314,8 +319,14 @@ void castRays(Vector2f dir, Vector2f camPlane) {
         }
 
         side = (sideDistX < sideDistY) ? EW : NS;
+        wallDist = __min(sideDistX, sideDistY);
 
-        rayBuffer[x] = CastRay{rayDir, __min(sideDistX, sideDistY), side}; // stores ray in buffer with distance to map object
+        double wallX;
+        if(side == EW) wallX = pPos.y + wallDist*rayDir.y;
+        else wallX = pPos.x + wallDist*rayDir.x;
+        wallX -= std::floor((wallX));
+
+        rayBuffer[x] = CastRay{rayDir, __min(sideDistX, sideDistY), side, currentIndex, wallX}; // stores ray in buffer with distance to map object
     }
 }
 
@@ -344,15 +355,22 @@ void renderView() {
     SDL_RenderFillRect(mainRender, &floor);
 
     for(int i = 0; i < winWidth; i++) {
-        lineHeight = (int)(winHeight/rayBuffer[i].dist);
+        CastRay currentRay = rayBuffer[i];
+        
+        lineHeight = (int)(winHeight/currentRay.dist);
         drawStart = -lineHeight/2 + winHeight/2;
         if(drawStart < 0) drawStart = 0;
         drawEnd = lineHeight/2+winHeight/2;
         if(drawEnd >= winHeight) drawEnd = winHeight - 1;
 
-        wallColor = (rayBuffer[i].side == EW) ? wallColorEW : wallColorNS; // rudimentary lighting based on side
+        if(testmap1[currentRay.mapI] <= wallTexs->cache.size()) {
+            int texWidth;
+            int texX = int(currentRay.wallX * double());
+        } else {
+            wallColor = (currentRay.side == EW) ? wallColorEW : wallColorNS; // rudimentary lighting based on side
 
-        SDL_SetRenderDrawColor(mainRender, wallColor.r, wallColor.g, wallColor.b, wallColor.a);
-        SDL_RenderDrawLine(mainRender, i, drawStart, i, drawEnd);
+            SDL_SetRenderDrawColor(mainRender, wallColor.r, wallColor.g, wallColor.b, wallColor.a);
+            SDL_RenderDrawLine(mainRender, i, drawStart, i, drawEnd);
+        }
     }
 }
