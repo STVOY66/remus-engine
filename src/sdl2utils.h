@@ -52,10 +52,10 @@ class ImgCache {
 
         void loadDir(fs::path);
         void loadImage(fs::path);
+        void flush();
     private:
         std::vector<std::string> filetypes;
         unsigned int flags;
 
-        void flush();
         void flag2str();
 };
