@@ -371,15 +371,17 @@ void renderView() {
         if(mapVal <= wallTexs->cache.size() && mapVal > 0) {
             currTex = wallTexs->atIndex(mapVal - 1).second;
             texDim = wallTexs->getDim(mapVal - 1);
-            texH = (deltaHeight) ? int((float(winHeight)/float(lineHeight))*float(texDim.y)) : texDim.y;
+            texH = int((float(winHeight)/float(lineHeight))*float(texDim.y));
             dest = {i, drawStart, 1, drawEnd - drawStart};
-            texY = (deltaHeight) ? (drawStart-winHeight/2 + lineHeight/2) * texDim.y/lineHeight : 0;
+            texY = (double(drawStart)-winHeight/2.0 + lineHeight/2.0) * double(texDim.y)/double(lineHeight);
 
             texX = int(currentRay.wallX * double(texDim.x));
             if((currentRay.side == EW && currentRay.dir.x > 0) ||
                (currentRay.side == NS && currentRay.dir.y < 0)) texX = texDim.x - texX - 1;
             source = {texX, texY, 1, texH};
 
+            if(currentRay.side == NS) SDL_SetTextureColorMod(currTex, 190, 190, 190);
+            else SDL_SetTextureColorMod(currTex, 255, 255, 255);
             SDL_RenderCopy(mainRender, currTex, &source, &dest);
 
         } else {
