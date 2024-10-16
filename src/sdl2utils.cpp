@@ -24,6 +24,17 @@ Vector2f fVector2Rotate(Vector2f vector, float amt) {
     return output;
 }
 
+Uint32 getPixelData(Uint32* pixels, int pitch, int x, int y) {
+    return pixels[y*(pitch/sizeof(Uint32)) + x];
+}
+
+Uint32 darkenPixelRGBA32(Uint32 color, float amt) {
+    Uint32 output;
+    short int r = (color >> 24) & 0x000000FF, g = (color >> 16) & 0x000000FF, b = (color >> 8) & 0x000000FF, a = (color & 0x000000FF);
+    r *= amt; g *= amt; b *= amt;
+    return ((r << 24) | (g << 16) | (b << 8) | a);
+}
+
 /******** TEXCACHE DEFINITIONS ********/
 
 TexCache::TexCache(SDL_Renderer* renderer) {
@@ -196,7 +207,14 @@ void ImgCache::loadImage(fs::path workPath) {
         }
 
         if(supported) {
-            cache.insert({workPath.filename().string(), IMG_Load(workPath.string().c_str())});
+            SDL_Surface* workingSurf = IMG_Load(workPath.string().c_str());
+            SDL_Surface* optimSurf = SDL_ConvertSurfaceFormat(workingSurf, SDL_PIXELFORMAT_RGBA8888, 0);
+
+            cache.insert({workPath.filename().string(), optimSurf});
+
+            SDL_FreeSurface(workingSurf);
+            workingSurf = NULL;
+
             std::cout << workPath << " loaded successfully." << std::endl;
         } else {
             std::cout << "ERROR: Filetype \"" << pathExt << "\" not supported." << std::endl;

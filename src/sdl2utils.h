@@ -40,6 +40,11 @@ Vector2f fVector2Normalize(Vector2f);
 // Rotates vector by radians
 Vector2f fVector2Rotate(Vector2f, float);
 
+// Retrieve pixel data from position
+Uint32 getPixelData(Uint32*, int, int, int);
+
+Uint32 darkenPixelRGBA32(Uint32, float);
+
 // Class for texture storage
 class TexCache {
     public:

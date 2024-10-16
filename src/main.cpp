@@ -46,12 +46,12 @@ std::string testString;
 Player2D player;
 Vector2f cPlane;
 CastRay rayBuffer[winWidth];
-std::vector<SDL_Surface*> textures;
-TexCache *wallTexs = NULL;
+ImgCache *wallTexs = NULL;
 
 SDL_Window* mainWin = NULL;
 SDL_Surface* screenSurface = NULL;
 SDL_Renderer* mainRender = NULL;
+SDL_Texture* frameBuffer = NULL;
 
 //function headers
 void render();
@@ -61,6 +61,7 @@ bool init(RenderType);
 bool initLibs();
 void loadTextures();
 void close();
+void clearFrameBuffer();
 
 void drawPlayer(Player2D);
 void drawRays2D();
@@ -68,6 +69,7 @@ void draw2DMap(const int*, Vector2f, int);
 void drawDebug();
 
 void renderView();
+void renderDebug();
 
 void movePlayer(Player2D*, const Uint8*);
 void castRays(Vector2f, Vector2f);
@@ -127,14 +129,22 @@ bool init(RenderType renderType) {
                     screenSurface = SDL_GetWindowSurface(mainWin);
                     if(screenSurface == NULL) {
                         std::cout << "ERROR: Failed to get surface." << std::endl;
+                        success = false;
                     }
                 } else if(renderType == RENDERER) {
                     std::cout << "Creating renderer..." << std::endl;
                     mainRender = SDL_CreateRenderer(mainWin, -1, SDL_RENDERER_ACCELERATED);
                     if(mainRender == NULL) {
                         std::cout << "ERROR: Failed to get renderer." << std::endl;
+                        success = false;
                     } else {
-                        wallTexs = new TexCache(mainRender, resourceDir, img_flags);
+                        std::cout << "Creating frame buffer..." << std::endl;
+                        frameBuffer = SDL_CreateTexture(mainRender, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, winWidth, winHeight);
+                        if(frameBuffer == NULL) {
+                            std::cout << "ERROR: Failed to create frame buffer." << std::endl;
+                            success = false;
+                        }
+                        wallTexs = new ImgCache(resourceDir, img_flags);
                     }
                 }
             }
@@ -165,6 +175,9 @@ void close() {
     SDL_DestroyWindow(mainWin);
     mainWin = NULL;
 
+    SDL_DestroyTexture(frameBuffer);
+    frameBuffer = NULL;
+
     SDL_DestroyRenderer(mainRender);
     mainRender = NULL;
 
@@ -177,8 +190,21 @@ void render() {
     SDL_RenderClear(mainRender);
 
     renderView();
+    //renderDebug();
 
+    SDL_RenderCopy(mainRender, frameBuffer, NULL, NULL);
     SDL_RenderPresent(mainRender);
+}
+
+void clearFrameBuffer() {
+    Uint32 *pixels; int pitch;
+    SDL_LockTexture(frameBuffer, NULL, (void**) &pixels, &pitch);
+    for(int y = 0; y < winHeight; y++) {
+        for(int x = 0; x < winWidth; x++) {
+            pixels[y*pitch + x] = 0;
+        }
+    }
+    SDL_UnlockTexture(frameBuffer);
 }
 
 //Handles all update functions between frames
@@ -225,6 +251,24 @@ void drawDebug() {
     // DrawLine(dirPos.x - cPlane.x*mapScale, dirPos.y - cPlane.y*mapScale, dirPos.x + cPlane.x*mapScale, dirPos.y + cPlane.y*mapScale, GREEN);
     //draws player look dir
     //DrawLine(player.position.x, player.position.y, player.position.x + player.GetLookDir().x*mapScale, player.position.y + player.GetLookDir().y*mapScale, YELLOW);
+}
+
+void renderDebug() {
+    Uint32 *buffPix;
+    int buffPitch;
+    Uint32 color = 0xff0000ff;
+    int x, y;
+    if(SDL_LockTexture(frameBuffer, NULL, (void**) &buffPix, &buffPitch) == 0) {
+        for(x = 0; x < winWidth; x++) {
+            for(y = 0; y < winHeight; y++) {
+                buffPix[y*(buffPitch/sizeof(Uint32)) + x] = color;
+            }
+        }
+        for(x -= 64; x < winWidth; x++) {
+            for(y -= 64; y < winHeight; y++) buffPix[y*(buffPitch/sizeof(Uint32)) + x] = 0x0000ffff;
+        }
+    }
+    SDL_UnlockTexture(frameBuffer);
 }
 
 // moves a Player2D object given keyboard input
@@ -321,7 +365,7 @@ void castRays(Vector2f dir, Vector2f camPlane) {
 
         double wallX;
         if(side == EW) wallX = pPos.y + wallDist*rayDir.y;
-        else           wallX = pPos.x + wallDist*rayDir.x;
+        else wallX = pPos.x + wallDist*rayDir.x;
         wallX -= std::floor((wallX));
 
         rayBuffer[x] = CastRay{rayDir, __min(sideDistX, sideDistY), side, currentIndex, wallX}; // stores ray in buffer with distance to map object
@@ -338,28 +382,24 @@ void drawRays2D() {
 }
 
 void renderView() {
-    SDL_Color wallColorEW = RED; SDL_Color wallColorNS = DARK_RED; SDL_Color wallColor;
-    SDL_Color floorColor = GRAY;
-    SDL_Color ceilColor = SDL_Color{59, 242, 255}; // light blue
-    SDL_Texture* currTex = NULL;
-    SDL_Rect source, dest;
+    SDL_Surface* currTex = NULL;
     CastRay currentRay;
     Vector2i texDim;
-    int mapVal, texX, texY;
-    int lineHeight, deltaHeight = 0, offset, texH;
-    int drawStart; int drawEnd;
-    double DEBUGSTEP, DEBUGTEXH;
+    int mapVal, texX, texY, pixIndex;
+    int lineHeight, deltaHeight = 0, offset, texStep;
+    int drawStart, drawEnd;
+    Uint32 *bufferPixels, *texPix; int bufferPitch;
+    Uint32 pixColor;
+    double texPos;
 
-    SDL_Rect ceiling = SDL_Rect{0, 0, winWidth, winHeight/2};
-    SDL_SetRenderDrawColor(mainRender, ceilColor.r, ceilColor.g, ceilColor.b, ceilColor.a);
-    SDL_RenderFillRect(mainRender, &ceiling);
+    SDL_LockTexture(frameBuffer, NULL, (void**)&bufferPixels, &bufferPitch);
 
-    SDL_Rect floor = SDL_Rect{0, winHeight/2, winWidth, winHeight/2};
-    SDL_SetRenderDrawColor(mainRender, floorColor.r, floorColor.g, floorColor.b, floorColor.a);
-    SDL_RenderFillRect(mainRender, &floor);
+    for(int x = 0; x < winWidth; x++) for(int y = 0; y < winHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x3BF2FFFF;
 
-    for(int i = 0; i < winWidth; i++) {
-        currentRay = rayBuffer[i];
+    for(int x = 0; x < winWidth; x++) for(int y = winHeight/2; y < winHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x7D7D7DFF;
+    
+    for(int x = 0; x < winWidth; x++) {
+        currentRay = rayBuffer[x];
         mapVal = testmap1[currentRay.mapI];
         
         lineHeight = (int)(winHeight/currentRay.dist);
@@ -369,27 +409,32 @@ void renderView() {
         if(drawEnd >= winHeight) drawEnd = winHeight - 1;
         deltaHeight = (lineHeight > winHeight) ? lineHeight - winHeight : 0;
 
-        if(mapVal <= wallTexs->cache.size() && mapVal > 0) {
-            currTex = wallTexs->atIndex(mapVal - 1).second;
-            texDim = wallTexs->getDim(mapVal - 1);
-            texH = std::ceil((double(winHeight)/double(lineHeight))*float(texDim.y));
-            dest = {i, drawStart, 1, drawEnd - drawStart};
-            texY = (double(drawStart)-winHeight/2.0 + lineHeight/2.0) * double(texDim.y)/double(lineHeight);
+        pixColor = (currentRay.side == EW) ? 0xFF0000FF : 0x7D0000FF;
 
+        if(mapVal <= wallTexs->cache.size() && mapVal > 0) {
+            currTex = wallTexs->cache.at("0_testimg.jpg");
+            texPix = (Uint32*)currTex->pixels;
+            texDim = wallTexs->getDim(mapVal - 1);
+            texStep = double(texDim.y)/double(lineHeight);
+            texPos = (double(drawStart)-winHeight/2.0 + lineHeight/2.0) * texStep;
             texX = int(currentRay.wallX * double(texDim.x));
+            // if(currentRay.side == NS) SDL_SetTextureColorMod(currTex, 190, 190, 190);
+            // else                      SDL_SetTextureColorMod(currTex, 255, 255, 255);
+
             if((currentRay.side == EW && currentRay.dir.x > 0) ||
                (currentRay.side == NS && currentRay.dir.y < 0)) texX = texDim.x - texX - 1;
-            source = {texX, texY, 1, texH};
-
-            if(currentRay.side == NS) SDL_SetTextureColorMod(currTex, 190, 190, 190);
-            else SDL_SetTextureColorMod(currTex, 255, 255, 255);
-            SDL_RenderCopy(mainRender, currTex, &source, &dest);
-
-        } else {
-            wallColor = (currentRay.side == EW) ? wallColorEW : wallColorNS; // rudimentary lighting based on side
-
-            SDL_SetRenderDrawColor(mainRender, wallColor.r, wallColor.g, wallColor.b, wallColor.a);
-            SDL_RenderDrawLine(mainRender, i, drawStart, i, drawEnd);
+            
+            for(int y = drawStart; y < drawEnd; y++) {
+                texY = int(texPos) & (texDim.y - 1);
+                texPos += texStep;
+                pixIndex = (texY*(currTex->pitch/sizeof(Uint32)) + texX);
+                pixColor = texPix[pixIndex];
+                //if(currentRay.side == EW) pixColor = darkenPixelRGBA32(pixColor, 0.8f);
+                bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = pixColor;
+            }
         }
     }
+
+    SDL_UnlockTexture(frameBuffer);
+    //SDL_RenderCopy(mainRender, frameBuffer, NULL, NULL);
 }
