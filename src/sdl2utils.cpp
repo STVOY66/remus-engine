@@ -28,7 +28,7 @@ Uint32 getPixelData(Uint32* pixels, int pitch, int x, int y) {
     return pixels[y*(pitch/sizeof(Uint32)) + x];
 }
 
-Uint32 darkenPixelRGBA32(Uint32 color, float amt) {
+Uint32 darkenPixelRGBA8888(Uint32 color, float amt) {
     Uint32 output;
     short int r = (color >> 24) & 0x000000FF, g = (color >> 16) & 0x000000FF, b = (color >> 8) & 0x000000FF, a = (color & 0x000000FF);
     r *= amt; g *= amt; b *= amt;

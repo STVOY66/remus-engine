@@ -8,8 +8,8 @@
 #include <cmath>
 
 //constant values
-const unsigned winWidth = 800;
-const unsigned winHeight = 600;
+const unsigned winWidth = 1280;
+const unsigned winHeight = 720;
 const unsigned FPS = 60;
 const Vector2i mapDim = {8, 8};
 const int testmap1[] = 
@@ -93,8 +93,8 @@ int main(int argc, char **argv) {
         deltaTime = ticks1 - ticks2;
         if(deltaTime > 1000.0f/float(FPS)) {
             quit = eventHandler(e);
-            render();
             update();
+            render();
             ticks2 = ticks1;
         }
         
@@ -151,8 +151,8 @@ bool init(RenderType renderType) {
         }
     }
 
-    player = Player2D(Vector2f{float(mapDim.x)/2.0, float(mapDim.y)/2.0}, Vector2f{-1.0f, 0.0f}, 0.05f, 0.05f);
-    cPlane = Vector2f{0.0f, 0.66f};
+    player = Player2D(Vector2f{4.05821, 2.37642}, Vector2f{-1.0f, 0.0f}, 0.05f, 0.05f);
+    cPlane = Vector2f{0.0f, 0.88f};
 
     return success;
 }
@@ -287,7 +287,7 @@ void movePlayer(Player2D *pl, const Uint8* keyStates) {
     }
 
     dir = pl->GetDir();
-    float offWall = 10.0f;
+    float offWall = 5.0f;
 
     if(keyStates[SDL_SCANCODE_W]) {
         newX = (testmap1[int(pos.y)*mapDim.x + int(pos.x + dir.x*ls*offWall)] > 0) ? pos.x : pos.x + (dir.x*ls);
@@ -386,11 +386,11 @@ void renderView() {
     CastRay currentRay;
     Vector2i texDim;
     int mapVal, texX, texY, pixIndex;
-    int lineHeight, deltaHeight = 0, offset, texStep;
+    unsigned int lineHeight, deltaHeight = 0, offset;
     int drawStart, drawEnd;
     Uint32 *bufferPixels, *texPix; int bufferPitch;
     Uint32 pixColor;
-    double texPos;
+    double texPos, texStep;
 
     SDL_LockTexture(frameBuffer, NULL, (void**)&bufferPixels, &bufferPitch);
 
@@ -403,7 +403,7 @@ void renderView() {
         mapVal = testmap1[currentRay.mapI];
         
         lineHeight = (int)(winHeight/currentRay.dist);
-        drawStart = -lineHeight/2 + winHeight/2;
+        drawStart = -(lineHeight/2) + winHeight/2;
         if(drawStart < 0) drawStart = 0;
         drawEnd = lineHeight/2+winHeight/2;
         if(drawEnd >= winHeight) drawEnd = winHeight - 1;
@@ -415,21 +415,18 @@ void renderView() {
             currTex = wallTexs->cache.at("0_testimg.jpg");
             texPix = (Uint32*)currTex->pixels;
             texDim = wallTexs->getDim(mapVal - 1);
-            texStep = double(texDim.y)/double(lineHeight);
-            texPos = (double(drawStart)-winHeight/2.0 + lineHeight/2.0) * texStep;
+            texStep = 1.0 * float(texDim.y)/float(lineHeight);
+            texPos = (drawStart-winHeight/2 + lineHeight/2) * texStep;
             texX = int(currentRay.wallX * double(texDim.x));
-            // if(currentRay.side == NS) SDL_SetTextureColorMod(currTex, 190, 190, 190);
-            // else                      SDL_SetTextureColorMod(currTex, 255, 255, 255);
-
             if((currentRay.side == EW && currentRay.dir.x > 0) ||
                (currentRay.side == NS && currentRay.dir.y < 0)) texX = texDim.x - texX - 1;
-            
+
             for(int y = drawStart; y < drawEnd; y++) {
                 texY = int(texPos) & (texDim.y - 1);
                 texPos += texStep;
                 pixIndex = (texY*(currTex->pitch/sizeof(Uint32)) + texX);
                 pixColor = texPix[pixIndex];
-                //if(currentRay.side == EW) pixColor = darkenPixelRGBA32(pixColor, 0.8f);
+                if(currentRay.side == EW) pixColor = darkenPixelRGBA8888(pixColor, 0.8f);
                 bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = pixColor;
             }
         }
