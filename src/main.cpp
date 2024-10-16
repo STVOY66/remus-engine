@@ -8,8 +8,8 @@
 #include <cmath>
 
 //constant values
-const unsigned winWidth = 1280;
-const unsigned winHeight = 720;
+const unsigned winWidth = 800;
+const unsigned winHeight = 600;
 const unsigned FPS = 60;
 const Vector2i mapDim = {8, 8};
 const int testmap1[] = 
@@ -152,7 +152,7 @@ bool init(RenderType renderType) {
     }
 
     player = Player2D(Vector2f{4.05821, 2.37642}, Vector2f{-1.0f, 0.0f}, 0.05f, 0.05f);
-    cPlane = Vector2f{0.0f, 0.88f};
+    cPlane = Vector2f{0.0f, 0.495f*(float(winWidth)/float(winHeight))};
 
     return success;
 }
