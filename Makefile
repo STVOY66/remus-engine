@@ -32,3 +32,7 @@ $(OBJDIR)/$(MAINSRC).o: $(SRCDIR)/$(MAINSRC).cpp | $(OBJDIR) #compiles main sour
 clean: #clean function to cleanup aftermath of makefile testing
 	@echo "Deleting objects and executables"
 	@rm -f $(OBJDIR)/*.o *.exe
+
+.phony: run
+run: main
+	@./main.exe

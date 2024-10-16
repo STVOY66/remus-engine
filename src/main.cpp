@@ -321,7 +321,7 @@ void castRays(Vector2f dir, Vector2f camPlane) {
 
         double wallX;
         if(side == EW) wallX = pPos.y + wallDist*rayDir.y;
-        else wallX = pPos.x + wallDist*rayDir.x;
+        else           wallX = pPos.x + wallDist*rayDir.x;
         wallX -= std::floor((wallX));
 
         rayBuffer[x] = CastRay{rayDir, __min(sideDistX, sideDistY), side, currentIndex, wallX}; // stores ray in buffer with distance to map object
@@ -348,6 +348,7 @@ void renderView() {
     int mapVal, texX, texY;
     int lineHeight, deltaHeight = 0, offset, texH;
     int drawStart; int drawEnd;
+    double DEBUGSTEP, DEBUGTEXH;
 
     SDL_Rect ceiling = SDL_Rect{0, 0, winWidth, winHeight/2};
     SDL_SetRenderDrawColor(mainRender, ceilColor.r, ceilColor.g, ceilColor.b, ceilColor.a);
@@ -371,7 +372,7 @@ void renderView() {
         if(mapVal <= wallTexs->cache.size() && mapVal > 0) {
             currTex = wallTexs->atIndex(mapVal - 1).second;
             texDim = wallTexs->getDim(mapVal - 1);
-            texH = int((float(winHeight)/float(lineHeight))*float(texDim.y));
+            texH = std::ceil((double(winHeight)/double(lineHeight))*float(texDim.y));
             dest = {i, drawStart, 1, drawEnd - drawStart};
             texY = (double(drawStart)-winHeight/2.0 + lineHeight/2.0) * double(texDim.y)/double(lineHeight);
 

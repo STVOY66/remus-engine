@@ -40,7 +40,7 @@ Vector2f fVector2Normalize(Vector2f);
 // Rotates vector by radians
 Vector2f fVector2Rotate(Vector2f, float);
 
-// Class for image storage
+// Class for texture storage
 class TexCache {
     public:
         std::map<std::string, SDL_Texture*> cache;
@@ -64,6 +64,33 @@ class TexCache {
         std::vector<std::string> filetypes;
         unsigned int flags;
         SDL_Renderer* programRender;
+
+        void flag2str();
+};
+
+// Class for image storage
+class ImgCache {
+    public:
+        std::map<std::string, SDL_Surface*> cache;
+
+        ImgCache();
+        ImgCache(int);
+        ImgCache(std::string, int);
+        ~ImgCache();
+
+        void loadDir(fs::path);
+        void loadImage(fs::path);
+        int getWidth(std::string);
+        int getWidth(int);
+        int getHeight(std::string);
+        int getHeight(int);
+        Vector2i getDim(int);
+        Vector2i getDim(std::string);
+        std::pair<std::string, SDL_Surface*> atIndex(int);
+        void flush();
+    private:
+        std::vector<std::string> filetypes;
+        unsigned int flags;
 
         void flag2str();
 };

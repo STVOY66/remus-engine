@@ -24,6 +24,8 @@ Vector2f fVector2Rotate(Vector2f vector, float amt) {
     return output;
 }
 
+/******** TEXCACHE DEFINITIONS ********/
+
 TexCache::TexCache(SDL_Renderer* renderer) {
     this->programRender = renderer;
     this->flags = IMG_INIT_JPG;
@@ -141,5 +143,118 @@ void TexCache::flush() {
     std::map<std::string, SDL_Texture*>::iterator i = cache.begin();
     for(;i != cache.end(); i++)
         SDL_DestroyTexture(i->second);
+    cache.clear();
+}
+
+/******** IMGCACHE DEFINITIONS ********/
+
+ImgCache::ImgCache() {
+    this->flags = IMG_INIT_JPG;
+    flag2str();
+}
+
+ImgCache::ImgCache(int flags) {
+    this->flags = (flags > 63) ? IMG_INIT_JPG : flags;
+    flag2str();
+}
+
+ImgCache::ImgCache(std::string path, int flags) {
+    this->flags = (flags > 63) ? IMG_INIT_JPG : flags;
+    flag2str();
+
+    fs::path workPath = path;
+
+    if(fs::exists(workPath)) {
+        if(fs::is_directory(workPath)) loadDir(workPath);
+        else {
+            bool supported = false;
+            std::string pathExt = workPath.extension().string();
+
+            for(std::string ext : filetypes) {
+                if(pathExt == ext) {
+                    supported = true;
+                    break;
+                }
+            }
+
+            loadImage(workPath);
+        }
+    }
+}
+
+ImgCache::~ImgCache() {
+    flush();
+}
+
+void ImgCache::loadImage(fs::path workPath) {
+    bool supported = false;
+    std::string pathExt = workPath.extension().string();
+    if(cache.find(workPath.filename().string()) == cache.end()){
+        std::cout << "Loading " << workPath << " into cache..." << std::endl;
+        for(std::string ext : filetypes) {
+            if(pathExt == ext) { supported = true; break; }
+        }
+
+        if(supported) {
+            cache.insert({workPath.filename().string(), IMG_Load(workPath.string().c_str())});
+            std::cout << workPath << " loaded successfully." << std::endl;
+        } else {
+            std::cout << "ERROR: Filetype \"" << pathExt << "\" not supported." << std::endl;
+        }
+    }
+}
+
+void ImgCache::loadDir(fs::path workPath) {
+    std::cout << "Loading directory \"" << workPath.string() << "\" into image cache..." << std::endl;
+    for( fs::directory_entry entry : fs::directory_iterator(workPath) ) {
+        if(fs::is_directory(entry)) loadDir(entry.path());
+        else loadImage(entry.path());
+    }
+}
+
+void ImgCache::flag2str() {
+    if(flags & IMG_INIT_JPG) { filetypes.push_back(".jpg"); filetypes.push_back(".jpeg"); }
+    if(flags & IMG_INIT_PNG) { filetypes.push_back(".png"); }
+    if(flags & IMG_INIT_TIF) { filetypes.push_back(".tif"); filetypes.push_back(".tiff");}
+    if(flags & IMG_INIT_WEBP) { filetypes.push_back(".webp"); }
+    if(flags & IMG_INIT_JXL) { filetypes.push_back(".jxl"); }
+    if(flags & IMG_INIT_AVIF) { filetypes.push_back(".avif"); filetypes.push_back(".avifs"); }
+}
+
+int ImgCache::getWidth(int index) {
+    return getWidth(atIndex(index).first);
+}
+
+int ImgCache::getWidth(std::string key) {
+    return cache.at(key)->w;
+}
+
+int ImgCache::getHeight(int index) {
+    return getHeight(atIndex(index).first);
+}
+
+int ImgCache::getHeight(std::string key) {
+    return cache.at(key)->h;
+}
+
+Vector2i ImgCache::getDim(int index) {
+    return getDim(atIndex(index).first);
+}
+
+Vector2i ImgCache::getDim(std::string key) {
+    return Vector2i{cache.at(key)->w, cache.at(key)->h};
+}
+
+std::pair<std::string, SDL_Surface*> ImgCache::atIndex(int index) {
+    auto it = cache.begin();
+    std::advance(it, index);
+    return *it;
+}
+
+void ImgCache::flush() {
+    std::cout << "Flushing image cache..." << std::endl;
+    auto i = cache.begin();
+    for(;i != cache.end(); i++)
+        SDL_FreeSurface(i->second);
     cache.clear();
 }
