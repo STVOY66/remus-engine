@@ -398,21 +398,21 @@ void renderView() {
 
     if(SDL_LockTexture(frameBuffer, NULL, (void**)&bufferPixels, &bufferPitch) == 0) {
 
-        // for(int x = 0; x < winWidth; x++) for(int y = 0; y < winHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x3BF2FFFF;
-        // for(int x = 0; x < winWidth; x++) for(int y = winHeight/2; y < winHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x7D7D7DFF;
+        // for(int x = 0; x < screenWidth; x++) for(int y = 0; y < screenHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x3BF2FFFF;
+        // for(int x = 0; x < screenWidth; x++) for(int y = screenHeight/2; y < screenHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x7D7D7DFF;
         
         renderCeilFloor(bufferPixels, &bufferPitch);
 
-        for(int x = 0; x < winWidth; x++) {
+        for(int x = 0; x < screenWidth; x++) {
             currentRay = rayBuffer[x];
             mapVal = testmap1[currentRay.mapI];
             
-            lineHeight = (int)(winHeight/currentRay.dist);
-            drawStart = -(lineHeight/2) + winHeight/2;
+            lineHeight = (int)(screenHeight/currentRay.dist);
+            drawStart = -(lineHeight/2) + screenHeight/2;
             if(drawStart < 0) drawStart = 0;
-            drawEnd = lineHeight/2+winHeight/2;
-            if(drawEnd >= winHeight) drawEnd = winHeight;
-            deltaHeight = (lineHeight > winHeight) ? lineHeight - winHeight : 0;
+            drawEnd = lineHeight/2+screenHeight/2;
+            if(drawEnd >= screenHeight) drawEnd = screenHeight;
+            deltaHeight = (lineHeight > screenHeight) ? lineHeight - screenHeight : 0;
 
             pixColor = (currentRay.side == EW) ? 0xFF0000FF : 0x7D0000FF;
 
@@ -445,22 +445,22 @@ void renderView() {
 void renderCeilFloor(Uint32* buffPix, int *buffPitch) {
     SDL_Surface *ceilTex = textures->cache.at("ceil.png"), *floorTex = textures->cache.at("floor.png");
     Uint32 *ceilTexBuff = (Uint32*)ceilTex->pixels, *floorTexBuff = (Uint32*)floorTex->pixels;
-    CastRay lRay = rayBuffer[0], rRay = rayBuffer[winWidth - 1];
+    CastRay lRay = rayBuffer[0], rRay = rayBuffer[screenWidth - 1];
     Vector2f floorPos; Vector2i cellPos, texPosF, texPosC;
     Uint32 pixColor;
-    float zPos = 0.5f * winHeight, rowDist, floorStepX, floorStepY;
+    float zPos = 0.5f * screenHeight, rowDist, floorStepX, floorStepY;
     int p;
 
-    for(int y = 0; y < winHeight; y++) {
-        p = y - winHeight/2;
+    for(int y = 0; y < screenHeight; y++) {
+        p = y - screenHeight/2;
         rowDist = zPos/p;
 
-        floorStepX = rowDist * float(rRay.dir.x - lRay.dir.x)/float(winWidth);
-        floorStepY = rowDist * float(rRay.dir.y - lRay.dir.y)/float(winWidth);
+        floorStepX = rowDist * float(rRay.dir.x - lRay.dir.x)/float(screenWidth);
+        floorStepY = rowDist * float(rRay.dir.y - lRay.dir.y)/float(screenWidth);
         floorPos.x = player.position.x + rowDist * lRay.dir.x;
         floorPos.y = player.position.y + rowDist * lRay.dir.y;
 
-        for(int x = 0; x < winWidth; x++) {
+        for(int x = 0; x < screenWidth; x++) {
             cellPos = {int(floorPos.x), int(floorPos.y)};
             texPosC = {int(ceilTex->w * (floorPos.x - cellPos.x)) & (ceilTex->w - 1), int(ceilTex->h * (floorPos.y - cellPos.y)) & (ceilTex->h - 1)};
             texPosF = {int(floorTex->w * (floorPos.x - cellPos.x)) & (floorTex->w - 1), int(floorTex->h * (floorPos.y - cellPos.y)) & (floorTex->h - 1)};
@@ -471,7 +471,7 @@ void renderCeilFloor(Uint32* buffPix, int *buffPitch) {
             buffPix[y*(*buffPitch/sizeof(Uint32)) + x] = pixColor;
 
             pixColor = ceilTexBuff[texPosC.y*(ceilTex->pitch/sizeof(Uint32)) + texPosC.x];
-            buffPix[(winHeight - y - 1)*(*buffPitch/sizeof(Uint32)) + x] = pixColor;
+            buffPix[(screenHeight - y - 1)*(*buffPitch/sizeof(Uint32)) + x] = pixColor;
         }
     }
 }
