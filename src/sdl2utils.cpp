@@ -28,11 +28,10 @@ Uint32 getPixelData(Uint32* pixels, int pitch, int x, int y) {
     return pixels[y*(pitch/sizeof(Uint32)) + x];
 }
 
-Uint32 darkenPixelRGBA8888(Uint32 color, float amt) {
-    Uint32 output;
-    short int r = (color >> 24) & 0x000000FF, g = (color >> 16) & 0x000000FF, b = (color >> 8) & 0x000000FF, a = (color & 0x000000FF);
+void darkenPixelRGBA8888(Uint32 *color, float amt) {
+    short int r = (*color >> 24) & 0xFF, g = (*color >> 16) & 0xFF, b = (*color >> 8) & 0xFF, a = (*color & 0xFF);
     r *= amt; g *= amt; b *= amt;
-    return ((r << 24) | (g << 16) | (b << 8) | a);
+    *color = ((r << 24) | (g << 16) | (b << 8) | a);
 }
 
 /******** TEXCACHE DEFINITIONS ********/

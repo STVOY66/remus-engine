@@ -429,7 +429,8 @@ void renderView() {
                     texPos += texStep;
                     pixIndex = (texY*(currTex->pitch/sizeof(Uint32)) + texX);
                     pixColor = texPix[pixIndex];
-                    if(currentRay.side == EW) pixColor = darkenPixelRGBA8888(pixColor, 0.8f);
+                    // if(currentRay.side == EW) pixColor = darkenPixelRGBA8888(pixColor, 0.8f);
+                    if(currentRay.side == EW) darkenPixelRGBA8888(&pixColor, 0.8f);
                     bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = pixColor;
                 }
             }
