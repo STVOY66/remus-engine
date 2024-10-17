@@ -23,7 +23,7 @@ const int testmap1[] =
  1, 0, 0, 0, 0, 0, 0, 1,
  1, 1, 0, 0, 0, 0, 1, 1,
  1, 1, 1, 1, 1, 1, 1, 1};
-const int img_flags = IMG_INIT_JPG;
+const int img_flags = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_WEBP;
 const std::string resourceDir = "./resources";
 
 enum HitType {
@@ -48,7 +48,8 @@ std::string testString;
 Player2D player;
 Vector2f cPlane;
 CastRay rayBuffer[screenWidth];
-ImgCache *wallTexs = NULL;
+
+ImgCache *textures = NULL;
 
 SDL_Window* mainWin = NULL;
 SDL_Surface* screenSurface = NULL;
@@ -71,6 +72,7 @@ void draw2DMap(const int*, Vector2f, int);
 void drawDebug();
 
 void renderView();
+void renderCeilFloor(Uint32*, int*);
 void renderDebug();
 
 void movePlayer(Player2D*, const Uint8*);
@@ -146,7 +148,7 @@ bool init(RenderType renderType) {
                             std::cout << "ERROR: Failed to create frame buffer." << std::endl;
                             success = false;
                         }
-                        wallTexs = new ImgCache(resourceDir, img_flags);
+                        textures = new ImgCache(resourceDir, img_flags);
                     }
                 }
             }
@@ -171,8 +173,8 @@ bool initLibs() {
 void close() {
     std::cout << "Closing program..." << std::endl;
 
-    wallTexs->flush();
-    wallTexs = NULL;
+    textures->flush();
+    textures = NULL;
 
     SDL_DestroyWindow(mainWin);
     mainWin = NULL;
@@ -394,46 +396,82 @@ void renderView() {
     Uint32 pixColor;
     double texPos, texStep;
 
-    SDL_LockTexture(frameBuffer, NULL, (void**)&bufferPixels, &bufferPitch);
+    if(SDL_LockTexture(frameBuffer, NULL, (void**)&bufferPixels, &bufferPitch) == 0) {
 
-    for(int x = 0; x < screenWidth; x++) for(int y = 0; y < screenHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x3BF2FFFF;
-
-    for(int x = 0; x < screenWidth; x++) for(int y = screenHeight/2; y < screenHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x7D7D7DFF;
-    
-    for(int x = 0; x < screenWidth; x++) {
-        currentRay = rayBuffer[x];
-        mapVal = testmap1[currentRay.mapI];
+        // for(int x = 0; x < winWidth; x++) for(int y = 0; y < winHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x3BF2FFFF;
+        // for(int x = 0; x < winWidth; x++) for(int y = winHeight/2; y < winHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x7D7D7DFF;
         
-        lineHeight = (int)(screenHeight/currentRay.dist);
-        drawStart = -(lineHeight/2) + screenHeight/2;
-        if(drawStart < 0) drawStart = 0;
-        drawEnd = lineHeight/2+screenHeight/2;
-        if(drawEnd >= screenHeight) drawEnd = screenHeight - 1;
-        deltaHeight = (lineHeight > screenHeight) ? lineHeight - screenHeight : 0;
+        renderCeilFloor(bufferPixels, &bufferPitch);
 
-        pixColor = (currentRay.side == EW) ? 0xFF0000FF : 0x7D0000FF;
+        for(int x = 0; x < winWidth; x++) {
+            currentRay = rayBuffer[x];
+            mapVal = testmap1[currentRay.mapI];
+            
+            lineHeight = (int)(winHeight/currentRay.dist);
+            drawStart = -(lineHeight/2) + winHeight/2;
+            if(drawStart < 0) drawStart = 0;
+            drawEnd = lineHeight/2+winHeight/2;
+            if(drawEnd >= winHeight) drawEnd = winHeight;
+            deltaHeight = (lineHeight > winHeight) ? lineHeight - winHeight : 0;
 
-        if(mapVal <= wallTexs->cache.size() && mapVal > 0) {
-            currTex = wallTexs->cache.at("0_testimg.jpg");
-            texPix = (Uint32*)currTex->pixels;
-            texDim = wallTexs->getDim(mapVal - 1);
-            texStep = 1.0 * float(texDim.y)/float(lineHeight);
-            texPos = (drawStart-screenHeight/2 + lineHeight/2) * texStep;
-            texX = int(currentRay.wallX * double(texDim.x));
-            if((currentRay.side == EW && currentRay.dir.x > 0) ||
-               (currentRay.side == NS && currentRay.dir.y < 0)) texX = texDim.x - texX - 1;
+            pixColor = (currentRay.side == EW) ? 0xFF0000FF : 0x7D0000FF;
 
-            for(int y = drawStart; y < drawEnd; y++) {
-                texY = int(texPos) & (texDim.y - 1);
-                texPos += texStep;
-                pixIndex = (texY*(currTex->pitch/sizeof(Uint32)) + texX);
-                pixColor = texPix[pixIndex];
-                if(currentRay.side == EW) pixColor = darkenPixelRGBA8888(pixColor, 0.8f);
-                bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = pixColor;
+            if(mapVal <= textures->cache.size() && mapVal > 0) {
+                currTex = textures->cache.at("wall.png");
+                texPix = (Uint32*)currTex->pixels;
+                texDim = textures->getDim("wall.png");
+                texStep = 1.0 * float(texDim.y)/float(lineHeight);
+                texPos = (drawStart-screenHeight/2 + lineHeight/2) * texStep;
+                texX = int(currentRay.wallX * double(texDim.x));
+                if((currentRay.side == EW && currentRay.dir.x > 0) ||
+                (currentRay.side == NS && currentRay.dir.y < 0)) texX = texDim.x - texX - 1;
+
+                for(int y = drawStart; y < drawEnd; y++) {
+                    texY = int(texPos) & (texDim.y - 1);
+                    texPos += texStep;
+                    pixIndex = (texY*(currTex->pitch/sizeof(Uint32)) + texX);
+                    pixColor = texPix[pixIndex];
+                    // if(currentRay.side == EW) pixColor = darkenPixelRGBA8888(pixColor, 0.8f);
+                    if(currentRay.side == EW) darkenPixelRGBA8888(&pixColor, 0.8f);
+                    bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = pixColor;
+                }
             }
         }
     }
-
     SDL_UnlockTexture(frameBuffer);
     //SDL_RenderCopy(mainRender, frameBuffer, NULL, NULL);
+}
+
+void renderCeilFloor(Uint32* buffPix, int *buffPitch) {
+    SDL_Surface *ceilTex = textures->cache.at("ceil.png"), *floorTex = textures->cache.at("floor.png");
+    Uint32 *ceilTexBuff = (Uint32*)ceilTex->pixels, *floorTexBuff = (Uint32*)floorTex->pixels;
+    CastRay lRay = rayBuffer[0], rRay = rayBuffer[winWidth - 1];
+    Vector2f floorPos; Vector2i cellPos, texPosF, texPosC;
+    Uint32 pixColor;
+    float zPos = 0.5f * winHeight, rowDist, floorStepX, floorStepY;
+    int p;
+
+    for(int y = 0; y < winHeight; y++) {
+        p = y - winHeight/2;
+        rowDist = zPos/p;
+
+        floorStepX = rowDist * float(rRay.dir.x - lRay.dir.x)/float(winWidth);
+        floorStepY = rowDist * float(rRay.dir.y - lRay.dir.y)/float(winWidth);
+        floorPos.x = player.position.x + rowDist * lRay.dir.x;
+        floorPos.y = player.position.y + rowDist * lRay.dir.y;
+
+        for(int x = 0; x < winWidth; x++) {
+            cellPos = {int(floorPos.x), int(floorPos.y)};
+            texPosC = {int(ceilTex->w * (floorPos.x - cellPos.x)) & (ceilTex->w - 1), int(ceilTex->h * (floorPos.y - cellPos.y)) & (ceilTex->h - 1)};
+            texPosF = {int(floorTex->w * (floorPos.x - cellPos.x)) & (floorTex->w - 1), int(floorTex->h * (floorPos.y - cellPos.y)) & (floorTex->h - 1)};
+            floorPos.x += floorStepX;
+            floorPos.y += floorStepY;
+
+            pixColor = floorTexBuff[texPosF.y*(floorTex->pitch/sizeof(Uint32)) + texPosF.x];
+            buffPix[y*(*buffPitch/sizeof(Uint32)) + x] = pixColor;
+
+            pixColor = ceilTexBuff[texPosC.y*(ceilTex->pitch/sizeof(Uint32)) + texPosC.x];
+            buffPix[(winHeight - y - 1)*(*buffPitch/sizeof(Uint32)) + x] = pixColor;
+        }
+    }
 }
