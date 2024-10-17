@@ -21,7 +21,7 @@ const int testmap1[] =
  1, 0, 0, 0, 0, 0, 0, 1,
  1, 1, 0, 0, 0, 0, 1, 1,
  1, 1, 1, 1, 1, 1, 1, 1};
-const int img_flags = IMG_INIT_JPG;
+const int img_flags = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_WEBP;
 const std::string resourceDir = "./resources";
 
 enum HitType {
@@ -412,9 +412,9 @@ void renderView() {
         pixColor = (currentRay.side == EW) ? 0xFF0000FF : 0x7D0000FF;
 
         if(mapVal <= wallTexs->cache.size() && mapVal > 0) {
-            currTex = wallTexs->cache.at("0_testimg.jpg");
+            currTex = wallTexs->cache.at("wall.png");
             texPix = (Uint32*)currTex->pixels;
-            texDim = wallTexs->getDim(mapVal - 1);
+            texDim = wallTexs->getDim("wall.png");
             texStep = 1.0 * float(texDim.y)/float(lineHeight);
             texPos = (drawStart-winHeight/2 + lineHeight/2) * texStep;
             texX = int(currentRay.wallX * double(texDim.x));
