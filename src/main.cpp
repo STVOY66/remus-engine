@@ -409,7 +409,7 @@ void renderView() {
             drawStart = -(lineHeight/2) + winHeight/2;
             if(drawStart < 0) drawStart = 0;
             drawEnd = lineHeight/2+winHeight/2;
-            if(drawEnd >= winHeight) drawEnd = winHeight - 1;
+            if(drawEnd >= winHeight) drawEnd = winHeight;
             deltaHeight = (lineHeight > winHeight) ? lineHeight - winHeight : 0;
 
             pixColor = (currentRay.side == EW) ? 0xFF0000FF : 0x7D0000FF;
@@ -452,21 +452,22 @@ void renderCeilFloor(Uint32* buffPix, int *buffPitch) {
         p = y - winHeight/2;
         rowDist = zPos/p;
 
-        floorStepX = rowDist * (rRay.dir.x - lRay.dir.x)/winWidth;
-        floorStepY = rowDist * (rRay.dir.y - lRay.dir.y)/winWidth;
-        floorPos.x = player.position.x + rowDist * rRay.dir.x;
-        floorPos.y = player.position.y + rowDist * rRay.dir.y;
+        floorStepX = rowDist * float(rRay.dir.x - lRay.dir.x)/float(winWidth);
+        floorStepY = rowDist * float(rRay.dir.y - lRay.dir.y)/float(winWidth);
+        floorPos.x = player.position.x + rowDist * lRay.dir.x;
+        floorPos.y = player.position.y + rowDist * lRay.dir.y;
 
         for(int x = 0; x < winWidth; x++) {
             cellPos = {int(floorPos.x), int(floorPos.y)};
             texPosC = {int(ceilTex->w * (floorPos.x - cellPos.x)) & (ceilTex->w - 1), int(ceilTex->h * (floorPos.y - cellPos.y)) & (ceilTex->h - 1)};
             texPosF = {int(floorTex->w * (floorPos.x - cellPos.x)) & (floorTex->w - 1), int(floorTex->h * (floorPos.y - cellPos.y)) & (floorTex->h - 1)};
-            floorPos = {floorPos.x + floorStepX, floorPos.y + floorStepY};
+            floorPos.x += floorStepX;
+            floorPos.y += floorStepY;
 
-            pixColor = floorTexBuff[texPosC.y*(ceilTex->pitch/sizeof(Uint32)) + texPosC.x];
+            pixColor = floorTexBuff[texPosF.y*(floorTex->pitch/sizeof(Uint32)) + texPosF.x];
             buffPix[y*(*buffPitch/sizeof(Uint32)) + x] = pixColor;
 
-            pixColor = ceilTexBuff[texPosF.y*(floorTex->pitch/sizeof(Uint32)) + texPosF.x];
+            pixColor = ceilTexBuff[texPosC.y*(ceilTex->pitch/sizeof(Uint32)) + texPosC.x];
             buffPix[(winHeight - y - 1)*(*buffPitch/sizeof(Uint32)) + x] = pixColor;
         }
     }
