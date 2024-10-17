@@ -8,8 +8,10 @@
 #include <cmath>
 
 //constant values
-const unsigned winWidth = 800;
-const unsigned winHeight = 600;
+const unsigned winWidth = 1280;
+const unsigned winHeight = 720;
+const unsigned screenWidth = 640;
+const unsigned screenHeight = int((float)screenWidth * (float(winHeight)/float(winWidth)));
 const unsigned FPS = 60;
 const Vector2i mapDim = {8, 8};
 const int testmap1[] = 
@@ -45,7 +47,7 @@ struct CastRay {
 std::string testString;
 Player2D player;
 Vector2f cPlane;
-CastRay rayBuffer[winWidth];
+CastRay rayBuffer[screenWidth];
 ImgCache *wallTexs = NULL;
 
 SDL_Window* mainWin = NULL;
@@ -76,7 +78,7 @@ void castRays(Vector2f, Vector2f);
 
 
 int main(int argc, char **argv) {
-    //InitWindow(winWidth, winHeight, "Remus Engine");
+    //InitWindow(screenWidth, screenHeight, "Remus Engine");
     std::cout << "Executing program..." << std::endl;
     bool quit = false;
     SDL_Event e;
@@ -139,7 +141,7 @@ bool init(RenderType renderType) {
                         success = false;
                     } else {
                         std::cout << "Creating frame buffer..." << std::endl;
-                        frameBuffer = SDL_CreateTexture(mainRender, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, winWidth, winHeight);
+                        frameBuffer = SDL_CreateTexture(mainRender, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, screenWidth, screenHeight);
                         if(frameBuffer == NULL) {
                             std::cout << "ERROR: Failed to create frame buffer." << std::endl;
                             success = false;
@@ -152,7 +154,7 @@ bool init(RenderType renderType) {
     }
 
     player = Player2D(Vector2f{4.05821, 2.37642}, Vector2f{-1.0f, 0.0f}, 0.05f, 0.05f);
-    cPlane = Vector2f{0.0f, 0.495f*(float(winWidth)/float(winHeight))};
+    cPlane = Vector2f{0.0f, 0.495f*(float(screenWidth)/float(screenHeight))};
 
     return success;
 }
@@ -199,8 +201,8 @@ void render() {
 void clearFrameBuffer() {
     Uint32 *pixels; int pitch;
     SDL_LockTexture(frameBuffer, NULL, (void**) &pixels, &pitch);
-    for(int y = 0; y < winHeight; y++) {
-        for(int x = 0; x < winWidth; x++) {
+    for(int y = 0; y < screenHeight; y++) {
+        for(int x = 0; x < screenWidth; x++) {
             pixels[y*pitch + x] = 0;
         }
     }
@@ -259,13 +261,13 @@ void renderDebug() {
     Uint32 color = 0xff0000ff;
     int x, y;
     if(SDL_LockTexture(frameBuffer, NULL, (void**) &buffPix, &buffPitch) == 0) {
-        for(x = 0; x < winWidth; x++) {
-            for(y = 0; y < winHeight; y++) {
+        for(x = 0; x < screenWidth; x++) {
+            for(y = 0; y < screenHeight; y++) {
                 buffPix[y*(buffPitch/sizeof(Uint32)) + x] = color;
             }
         }
-        for(x -= 64; x < winWidth; x++) {
-            for(y -= 64; y < winHeight; y++) buffPix[y*(buffPitch/sizeof(Uint32)) + x] = 0x0000ffff;
+        for(x -= 64; x < screenWidth; x++) {
+            for(y -= 64; y < screenHeight; y++) buffPix[y*(buffPitch/sizeof(Uint32)) + x] = 0x0000ffff;
         }
     }
     SDL_UnlockTexture(frameBuffer);
@@ -312,8 +314,8 @@ void castRays(Vector2f dir, Vector2f camPlane) {
     int stepX, stepY; // which direction along the axes
     HitType side; // determines whether there was a hit, and whether it was NS or EW
 
-    for(int x = 0; x < winWidth; x++) {
-        camX = 2.0*(double(x)/double(winWidth)) - 1.0;
+    for(int x = 0; x < screenWidth; x++) {
+        camX = 2.0*(double(x)/double(screenWidth)) - 1.0;
         rayDir = Vector2f{dir.x + camPlane.x*float(camX), dir.y + camPlane.y*float(camX)};
         mapX = pPos.x; mapY = pPos.y;
         dDistX = (rayDir.x == 0) ? 1e30 : std::abs(1/rayDir.x);
@@ -375,7 +377,7 @@ void castRays(Vector2f dir, Vector2f camPlane) {
 //top-down visualization of ray-casting
 void drawRays2D() {
     // CastRay ray;
-    // for(int i = 0; i < winWidth; i++) {
+    // for(int i = 0; i < screenWidth; i++) {
     //     ray = rayBuffer[i];
     //     DrawLine(player.position.x, player.position.y, player.position.x + ray.dir.x*ray.dist*mapScale, player.position.y + ray.dir.y*ray.dist*mapScale, YELLOW);
     // }
@@ -394,20 +396,20 @@ void renderView() {
 
     SDL_LockTexture(frameBuffer, NULL, (void**)&bufferPixels, &bufferPitch);
 
-    for(int x = 0; x < winWidth; x++) for(int y = 0; y < winHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x3BF2FFFF;
+    for(int x = 0; x < screenWidth; x++) for(int y = 0; y < screenHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x3BF2FFFF;
 
-    for(int x = 0; x < winWidth; x++) for(int y = winHeight/2; y < winHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x7D7D7DFF;
+    for(int x = 0; x < screenWidth; x++) for(int y = screenHeight/2; y < screenHeight; y++) bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = 0x7D7D7DFF;
     
-    for(int x = 0; x < winWidth; x++) {
+    for(int x = 0; x < screenWidth; x++) {
         currentRay = rayBuffer[x];
         mapVal = testmap1[currentRay.mapI];
         
-        lineHeight = (int)(winHeight/currentRay.dist);
-        drawStart = -(lineHeight/2) + winHeight/2;
+        lineHeight = (int)(screenHeight/currentRay.dist);
+        drawStart = -(lineHeight/2) + screenHeight/2;
         if(drawStart < 0) drawStart = 0;
-        drawEnd = lineHeight/2+winHeight/2;
-        if(drawEnd >= winHeight) drawEnd = winHeight - 1;
-        deltaHeight = (lineHeight > winHeight) ? lineHeight - winHeight : 0;
+        drawEnd = lineHeight/2+screenHeight/2;
+        if(drawEnd >= screenHeight) drawEnd = screenHeight - 1;
+        deltaHeight = (lineHeight > screenHeight) ? lineHeight - screenHeight : 0;
 
         pixColor = (currentRay.side == EW) ? 0xFF0000FF : 0x7D0000FF;
 
@@ -416,7 +418,7 @@ void renderView() {
             texPix = (Uint32*)currTex->pixels;
             texDim = wallTexs->getDim(mapVal - 1);
             texStep = 1.0 * float(texDim.y)/float(lineHeight);
-            texPos = (drawStart-winHeight/2 + lineHeight/2) * texStep;
+            texPos = (drawStart-screenHeight/2 + lineHeight/2) * texStep;
             texX = int(currentRay.wallX * double(texDim.x));
             if((currentRay.side == EW && currentRay.dir.x > 0) ||
                (currentRay.side == NS && currentRay.dir.y < 0)) texX = texDim.x - texX - 1;
