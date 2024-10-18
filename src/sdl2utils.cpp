@@ -8,22 +8,6 @@
 
 namespace fs = std::filesystem;
 
-float fVector2Length(Vector2f vector) {
-    return SDL_sqrtf((vector.x * vector.x) + (vector.y * vector.y));
-}
-
-Vector2f fVector2Normalize(Vector2f vector) {
-    float len = fVector2Length(vector);
-    return Vector2f{vector.x/len, vector.y/len};
-}
-
-Vector2f fVector2Rotate(Vector2f vector, float amt) {
-    float sinAmt = SDL_sinf(amt);
-    float cosAmt = SDL_cosf(amt);
-    Vector2f output = {(vector.x*cosAmt) - (vector.y*sinAmt), (vector.x*sinAmt) + (vector.y*cosAmt)};
-    return output;
-}
-
 Uint32 getPixelData(Uint32* pixels, int pitch, int x, int y) {
     return pixels[y*(pitch/sizeof(Uint32)) + x];
 }

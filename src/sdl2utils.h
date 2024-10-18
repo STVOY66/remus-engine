@@ -7,38 +7,16 @@
 
 namespace fs = std::filesystem;
 
-// ******** SDL color constants ********
-#define BLACK SDL_Color{0, 0, 0, 255}
-#define GRAY SDL_Color{125, 125, 125, 255};
-#define WHITE SDL_Color{255, 255, 255, 255};
-#define RED SDL_Color{255, 0, 0, 255};
-#define DARK_RED SDL_Color{125, 0, 0, 255};
-#define GREEN SDL_Color{0, 255, 0, 255};
-#define DARK_GREEN SDL_Color{0, 125, 0, 255};
-#define BLUE SDL_Color{0, 0, 255, 255};
-#define DARK_BLUE SDL_Color{0, 0, 125, 255};
-
-// ******** Vector2 utilities ********
-
-// 2D Vector using floats
-struct Vector2f {
-    float x;
-    float y;
-};
-
-struct Vector2i {
-    int x;
-    int y;
-};
-
-// Returns length of 2D Vector
-float fVector2Length(Vector2f);
-
-// Normalizes 2D Vector
-Vector2f fVector2Normalize(Vector2f);
-
-// Rotates vector by radians
-Vector2f fVector2Rotate(Vector2f, float);
+// ******** RGBA8888 color constants ********
+#define BLACK 0x000000FF
+#define GRAY 0x7D7D7DFF
+#define WHITE 0xFFFFFFFF;
+#define RED 0xFF0000FF;
+#define DARK_RED 0x7D0000FF;
+#define GREEN 0x00FF00FF;
+#define DARK_GREEN 0x007D00FF;
+#define BLUE 0x0000FFFF;
+#define DARK_BLUE 0x00007DFF;
 
 // Retrieve pixel data from position
 Uint32 getPixelData(Uint32*, int, int, int);

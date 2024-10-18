@@ -10,7 +10,8 @@
 //constant values
 const unsigned winWidth = 1280;
 const unsigned winHeight = 720;
-const unsigned screenWidth = 640;
+const float resScale = 0.05f;
+const unsigned screenWidth = roundf(winWidth*resScale);
 const unsigned screenHeight = int((float)screenWidth * (float(winHeight)/float(winWidth)));
 const unsigned FPS = 60;
 const Vector2i mapDim = {8, 8};
@@ -462,8 +463,10 @@ void renderCeilFloor(Uint32* buffPix, int *buffPitch) {
 
         for(int x = 0; x < screenWidth; x++) {
             cellPos = {int(floorPos.x), int(floorPos.y)};
-            texPosC = {int(ceilTex->w * (floorPos.x - cellPos.x)) & (ceilTex->w - 1), int(ceilTex->h * (floorPos.y - cellPos.y)) & (ceilTex->h - 1)};
-            texPosF = {int(floorTex->w * (floorPos.x - cellPos.x)) & (floorTex->w - 1), int(floorTex->h * (floorPos.y - cellPos.y)) & (floorTex->h - 1)};
+            texPosC = {int(ceilTex->w * (floorPos.x - cellPos.x)) & (ceilTex->w - 1), 
+                       int(ceilTex->h * (floorPos.y - cellPos.y)) & (ceilTex->h - 1)};
+            texPosF = {int(floorTex->w * (floorPos.x - cellPos.x)) & (floorTex->w - 1), 
+                       int(floorTex->h * (floorPos.y - cellPos.y)) & (floorTex->h - 1)};
             floorPos.x += floorStepX;
             floorPos.y += floorStepY;
 
