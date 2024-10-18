@@ -1,5 +1,6 @@
 #include "SDL2/SDL.h"
 #include "SDL2/SDL_image.h"
+#include "gameutils.h"
 #include "player.h"
 #include "sdl2utils.h"
 #include <string>
@@ -10,7 +11,7 @@
 //constant values
 const unsigned winWidth = 1280;
 const unsigned winHeight = 720;
-const float resScale = 0.05f;
+const float resScale = 0.5f;
 const unsigned screenWidth = roundf(winWidth*resScale);
 const unsigned screenHeight = int((float)screenWidth * (float(winHeight)/float(winWidth)));
 const unsigned FPS = 60;
@@ -191,7 +192,7 @@ void close() {
 
 // handles functions that use a SDL_Renderer
 void render() {
-    SDL_SetRenderDrawColor(mainRender, BLACK.r, BLACK.g, BLACK.b, BLACK.a);
+    SDL_SetRenderDrawColor(mainRender, 0x00, 0x00, 0x00, 0xFF);
     SDL_RenderClear(mainRender);
 
     renderView();

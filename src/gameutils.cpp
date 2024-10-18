@@ -1,7 +1,8 @@
 #include "gameutils.h"
+#include <cmath>
 
 float fVector2Length(Vector2f vector) {
-    return SDL_sqrtf((vector.x * vector.x) + (vector.y * vector.y));
+    return sqrtf((vector.x * vector.x) + (vector.y * vector.y));
 }
 
 Vector2f fVector2Normalize(Vector2f vector) {
@@ -10,8 +11,8 @@ Vector2f fVector2Normalize(Vector2f vector) {
 }
 
 Vector2f fVector2Rotate(Vector2f vector, float amt) {
-    float sinAmt = SDL_sinf(amt);
-    float cosAmt = SDL_cosf(amt);
+    float sinAmt = sinf(amt);
+    float cosAmt = cosf(amt);
     Vector2f output = {(vector.x*cosAmt) - (vector.y*sinAmt), (vector.x*sinAmt) + (vector.y*cosAmt)};
     return output;
 }

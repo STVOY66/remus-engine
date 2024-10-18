@@ -1,5 +1,6 @@
 #pragma once
 #include "SDL2/SDL.h"
+#include "gameutils.h"
 #include <filesystem>
 #include <vector>
 #include <string>

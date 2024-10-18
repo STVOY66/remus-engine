@@ -1,6 +1,7 @@
 #include "SDL2/SDL.h"
-#include "sdl2utils.h"
 #include "SDL2/SDL_image.h"
+#include "gameutils.h"
+#include "sdl2utils.h"
 #include <filesystem>
 #include <iostream>
 #include <string>
