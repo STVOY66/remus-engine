@@ -29,7 +29,5 @@ struct Sprite {
     float y;
     int w;
     int h;
-    int camH;
-    Vector2f ldir;
     std::string texName;
 };

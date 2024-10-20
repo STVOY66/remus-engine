@@ -47,10 +47,21 @@ struct CastRay {
     double wallX;
 };
 
+struct RemusSprite : Sprite {
+    int camH;
+    double dist;
+    Vector2f ldir;
+
+    bool operator<(const RemusSprite& a) const {
+        return dist < a.dist;
+    }
+};
+
 std::string testString;
 Player2D player;
 Vector2f cPlane;
 CastRay rayBuffer[screenWidth];
+std::vector<RemusSprite> worldSprites;
 
 ImgCache *wallTex = NULL;
 ImgCache *sprTex = NULL;
@@ -66,6 +77,7 @@ void update();
 bool eventHandler(SDL_Event);
 bool init(RenderType);
 bool initLibs();
+bool initSprites();
 void loadTextures();
 void close();
 void clearFrameBuffer();
@@ -77,6 +89,7 @@ void drawDebug();
 
 void renderView();
 void renderCeilFloor(Uint32*, int*);
+void renderSprites(Uint32*, int*);
 void renderDebug();
 
 void movePlayer(Player2D*, const Uint8*);
@@ -153,7 +166,9 @@ bool init(RenderType renderType) {
                             success = false;
                         }
                         wallTex = new ImgCache(dirWallTex, img_flags);
-                        sprTex = new ImgCache(dirSprTex, img_flags);
+                        if(!initSprites()) {
+                            success = false;
+                        }
                     }
                 }
             }
@@ -172,6 +187,33 @@ bool initLibs() {
         return false;
     }
 
+    return true;
+}
+
+bool initSprites() {
+    std::cout << "Initializing sprite list..." << std::endl;
+    sprTex = new ImgCache(dirSprTex, img_flags);
+    for(auto st : sprTex->cache) {
+        worldSprites.push_back(RemusSprite{
+            mapDim.x/2,
+            mapDim.y/2, 
+            st.second->w, 
+            st.second->h,
+            st.first,
+            winHeight/2,
+            0.0,
+            Vector2f{0, 0} });
+        if(!worldSprites.empty()) {
+            if(worldSprites.back().texName == st.first) std::cout << "Sprite: " << st.first << " successfully created!" << std::endl;
+            else { 
+                std::cout << "Sprite: " << st.first << " failed to create, exiting program..." << std::endl;
+                return false;
+            }
+        } else {
+            std::cout << "Sprite: " << st.first << " failed to push to worldSprites, exiting program..." << std::endl;
+            return false;
+        }
+    }
     return true;
 }
 
@@ -442,6 +484,8 @@ void renderView() {
                 }
             }
         }
+
+        renderSprites(bufferPixels, &bufferPitch);
     }
     SDL_UnlockTexture(frameBuffer);
     //SDL_RenderCopy(mainRender, frameBuffer, NULL, NULL);
@@ -481,4 +525,8 @@ void renderCeilFloor(Uint32* buffPix, int *buffPitch) {
             buffPix[(screenHeight - y - 1)*(*buffPitch/sizeof(Uint32)) + x] = pixColor;
         }
     }
+}
+
+void renderSprites(Uint32 *buffPix, int *buffPitch) {
+
 }
