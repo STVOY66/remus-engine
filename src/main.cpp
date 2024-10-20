@@ -26,7 +26,8 @@ const int testmap1[] =
  1, 1, 0, 0, 0, 0, 1, 1,
  1, 1, 1, 1, 1, 1, 1, 1};
 const int img_flags = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_WEBP;
-const std::string resourceDir = "./resources";
+const std::string dirWallTex = "./resources/wall_textures";
+const std::string dirSprTex = "./resources/spr_textures";
 
 enum HitType {
     NS,
@@ -51,7 +52,8 @@ Player2D player;
 Vector2f cPlane;
 CastRay rayBuffer[screenWidth];
 
-ImgCache *textures = NULL;
+ImgCache *wallTex = NULL;
+ImgCache *sprTex = NULL;
 
 SDL_Window* mainWin = NULL;
 SDL_Surface* screenSurface = NULL;
@@ -150,7 +152,8 @@ bool init(RenderType renderType) {
                             std::cout << "ERROR: Failed to create frame buffer." << std::endl;
                             success = false;
                         }
-                        textures = new ImgCache(resourceDir, img_flags);
+                        wallTex = new ImgCache(dirWallTex, img_flags);
+                        sprTex = new ImgCache(dirSprTex, img_flags);
                     }
                 }
             }
@@ -175,8 +178,8 @@ bool initLibs() {
 void close() {
     std::cout << "Closing program..." << std::endl;
 
-    textures->flush();
-    textures = NULL;
+    wallTex->flush();
+    wallTex = NULL;
 
     SDL_DestroyWindow(mainWin);
     mainWin = NULL;
@@ -418,10 +421,10 @@ void renderView() {
 
             pixColor = (currentRay.side == EW) ? 0xFF0000FF : 0x7D0000FF;
 
-            if(mapVal <= textures->cache.size() && mapVal > 0) {
-                currTex = textures->cache.at("wall.png");
+            if(mapVal <= wallTex->cache.size() && mapVal > 0) {
+                currTex = wallTex->cache.at("wall.png");
                 texPix = (Uint32*)currTex->pixels;
-                texDim = textures->getDim("wall.png");
+                texDim = wallTex->getDim("wall.png");
                 texStep = 1.0 * float(texDim.y)/float(lineHeight);
                 texPos = (drawStart-screenHeight/2 + lineHeight/2) * texStep;
                 texX = int(currentRay.wallX * double(texDim.x));
@@ -445,7 +448,7 @@ void renderView() {
 }
 
 void renderCeilFloor(Uint32* buffPix, int *buffPitch) {
-    SDL_Surface *ceilTex = textures->cache.at("ceil.png"), *floorTex = textures->cache.at("floor.png");
+    SDL_Surface *ceilTex = wallTex->cache.at("ceil.png"), *floorTex = wallTex->cache.at("floor.png");
     Uint32 *ceilTexBuff = (Uint32*)ceilTex->pixels, *floorTexBuff = (Uint32*)floorTex->pixels;
     CastRay lRay = rayBuffer[0], rRay = rayBuffer[screenWidth - 1];
     Vector2f floorPos; Vector2i cellPos, texPosF, texPosC;

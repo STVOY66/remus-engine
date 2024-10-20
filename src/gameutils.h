@@ -1,6 +1,7 @@
 #pragma once
+#include <string>
 
-// ******** Vector2 utilities ********
+// ******** Vector utilities ********
 
 struct Vector2f {
     float x;
@@ -20,3 +21,15 @@ Vector2f fVector2Normalize(Vector2f);
 
 // Rotates vector by radians
 Vector2f fVector2Rotate(Vector2f, float);
+
+// ******** Sprites ********
+
+struct Sprite {
+    float x;
+    float y;
+    int w;
+    int h;
+    int camH;
+    Vector2f ldir;
+    std::string texName;
+};
