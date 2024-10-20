@@ -3,10 +3,12 @@
 #include "gameutils.h"
 #include "player.h"
 #include "sdl2utils.h"
-#include <string>
+#include <algorithm>
 #include <iostream>
+#include <string>
 #include <vector>
 #include <cmath>
+
 
 //constant values
 const unsigned winWidth = 1280;
@@ -25,7 +27,7 @@ const int testmap1[] =
  1, 0, 0, 0, 0, 0, 0, 1,
  1, 1, 0, 0, 0, 0, 1, 1,
  1, 1, 1, 1, 1, 1, 1, 1};
-const int img_flags = IMG_INIT_JPG | IMG_INIT_PNG | IMG_INIT_WEBP;
+const int img_flags = IMG_INIT_JPG | IMG_INIT_PNG;
 const std::string dirWallTex = "./resources/wall_textures";
 const std::string dirSprTex = "./resources/spr_textures";
 
@@ -48,13 +50,9 @@ struct CastRay {
 };
 
 struct RemusSprite : Sprite {
-    int camH;
+    int vPos;
     double dist;
     Vector2f ldir;
-
-    bool operator<(const RemusSprite& a) const {
-        return dist < a.dist;
-    }
 };
 
 std::string testString;
@@ -94,21 +92,22 @@ void renderDebug();
 
 void movePlayer(Player2D*, const Uint8*);
 void castRays(Vector2f, Vector2f);
+void updateSprites();
 
 
 int main(int argc, char **argv) {
     //InitWindow(screenWidth, screenHeight, "Remus Engine");
-    std::cout << "Executing program..." << std::endl;
+    std::cout << "Executing program..." << "\n";
     bool quit = false;
     SDL_Event e;
     Uint64 ticks1 = SDL_GetTicks64(), ticks2 = SDL_GetTicks64(), deltaTime;
 
     if(!init(RENDERER)) {
-        std::cout << "Program failed to initialize" << std::endl;
+        std::cout << "Program failed to initialize" << "\n";
         return 0;
     }
 
-    std::cout << "Running main loop..." << std::endl;
+    std::cout << "Running main loop..." << "\n";
     while(!quit) {
         ticks1 = SDL_GetTicks64();
         deltaTime = ticks1 - ticks2;
@@ -128,41 +127,41 @@ int main(int argc, char **argv) {
 bool init(RenderType renderType) {
     bool success = true;
 
-    std::cout << "Initializing SDL..." << std::endl;
+    std::cout << "Initializing SDL..." << "\n";
     if(SDL_Init(SDL_INIT_VIDEO) < 0) {
-        std::cout << "ERROR: SDL failed to initialize." << std::endl;
+        std::cout << "ERROR: SDL failed to initialize." << "\n";
         success = false;
     } else {
-        std::cout << "Creating window..." << std::endl;
+        std::cout << "Creating window..." << "\n";
         mainWin = SDL_CreateWindow("Remus Engine", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, winWidth, winHeight, SDL_WINDOW_SHOWN);
         if(mainWin == NULL) {
-            std::cout << "ERROR: Window failed to be created." << std::endl;
+            std::cout << "ERROR: Window failed to be created." << "\n";
             success = false;
         }
         else {
-            std::cout << "Initializing SDL extensions..." << std::endl;
+            std::cout << "Initializing SDL extensions..." << "\n";
             if(!initLibs()) {
                 std::cout << "ERROR: Failed to initialize SDL extensions.";
                 success = false;
             } else {
                 if(renderType == SURFACE) {
-                    std::cout << "Getting window surface..." << std::endl;
+                    std::cout << "Getting window surface..." << "\n";
                     screenSurface = SDL_GetWindowSurface(mainWin);
                     if(screenSurface == NULL) {
-                        std::cout << "ERROR: Failed to get surface." << std::endl;
+                        std::cout << "ERROR: Failed to get surface." << "\n";
                         success = false;
                     }
                 } else if(renderType == RENDERER) {
-                    std::cout << "Creating renderer..." << std::endl;
+                    std::cout << "Creating renderer..." << "\n";
                     mainRender = SDL_CreateRenderer(mainWin, -1, SDL_RENDERER_ACCELERATED);
                     if(mainRender == NULL) {
-                        std::cout << "ERROR: Failed to get renderer." << std::endl;
+                        std::cout << "ERROR: Failed to get renderer." << "\n";
                         success = false;
                     } else {
-                        std::cout << "Creating frame buffer..." << std::endl;
+                        std::cout << "Creating frame buffer..." << "\n";
                         frameBuffer = SDL_CreateTexture(mainRender, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, screenWidth, screenHeight);
                         if(frameBuffer == NULL) {
-                            std::cout << "ERROR: Failed to create frame buffer." << std::endl;
+                            std::cout << "ERROR: Failed to create frame buffer." << "\n";
                             success = false;
                         }
                         wallTex = new ImgCache(dirWallTex, img_flags);
@@ -183,7 +182,7 @@ bool init(RenderType renderType) {
 
 bool initLibs() {
     if(!(IMG_Init(img_flags) & img_flags)) {
-        std::cout << "ERROR: SDL_image failed to initialize." << std::endl;
+        std::cout << "ERROR: SDL_image failed to initialize." << "\n";
         return false;
     }
 
@@ -191,12 +190,12 @@ bool initLibs() {
 }
 
 bool initSprites() {
-    std::cout << "Initializing sprite list..." << std::endl;
+    std::cout << "Initializing sprite list..." << "\n";
     sprTex = new ImgCache(dirSprTex, img_flags);
     for(auto st : sprTex->cache) {
         worldSprites.push_back(RemusSprite{
-            mapDim.x/2,
-            mapDim.y/2, 
+            1.5f,
+            5.5f, 
             st.second->w, 
             st.second->h,
             st.first,
@@ -204,13 +203,13 @@ bool initSprites() {
             0.0,
             Vector2f{0, 0} });
         if(!worldSprites.empty()) {
-            if(worldSprites.back().texName == st.first) std::cout << "Sprite: " << st.first << " successfully created!" << std::endl;
+            if(worldSprites.back().texName == st.first) std::cout << "Sprite: " << st.first << " successfully created!" << "\n";
             else { 
-                std::cout << "Sprite: " << st.first << " failed to create, exiting program..." << std::endl;
+                std::cout << "Sprite: " << st.first << " failed to create, exiting program..." << "\n";
                 return false;
             }
         } else {
-            std::cout << "Sprite: " << st.first << " failed to push to worldSprites, exiting program..." << std::endl;
+            std::cout << "Sprite: " << st.first << " failed to push to worldSprites, exiting program..." << "\n";
             return false;
         }
     }
@@ -218,7 +217,7 @@ bool initSprites() {
 }
 
 void close() {
-    std::cout << "Closing program..." << std::endl;
+    std::cout << "Closing program..." << "\n";
 
     wallTex->flush();
     wallTex = NULL;
@@ -263,6 +262,7 @@ void update() {
     const Uint8* currKeyStates = SDL_GetKeyboardState(NULL);
     movePlayer(&player, currKeyStates);
     castRays(player.GetDir(), cPlane);
+    updateSprites();
 }
 
 //Draws player on 2d plane.
@@ -423,6 +423,17 @@ void castRays(Vector2f dir, Vector2f camPlane) {
     }
 }
 
+bool compDist(const RemusSprite &a, const RemusSprite &b) {
+    return (a.dist < b.dist);
+}
+
+void updateSprites() {
+    for(auto &spr : worldSprites) {
+        spr.dist = ((player.position.x - spr.x) * (player.position.x - spr.x)) + ((player.position.y - spr.y) * (player.position.y - spr.y));
+    }
+    std::sort(worldSprites.begin(), worldSprites.end(), compDist);
+}
+
 //top-down visualization of ray-casting
 void drawRays2D() {
     // CastRay ray;
@@ -528,5 +539,48 @@ void renderCeilFloor(Uint32* buffPix, int *buffPitch) {
 }
 
 void renderSprites(Uint32 *buffPix, int *buffPitch) {
+    SDL_Surface* currTex = NULL;
+    Uint32 *texBuff = NULL;
+    Vector2f relSprPos, camSprPos, pDir = player.GetDir();
+    float invMat = 1.0f / ((cPlane.x * pDir.y) - (cPlane.y * pDir.x)), sprScrX, texRatio;
+    int sprH, sprW, drawStartY, drawEndY, drawStartX, drawEndX, texX, texY, I_drawStartX, delt;
+    Uint32 scolor;
 
+    for(auto &spr : worldSprites) {
+        try { currTex = sprTex->cache.at(spr.texName); }
+        catch(const std::exception& e) { std::cerr << e.what() << '\n'; return;}
+
+        texBuff = (Uint32*)currTex->pixels;
+        
+        relSprPos = Vector2f{spr.x - player.position.x, spr.y - player.position.y};
+        camSprPos = Vector2f{invMat * ((pDir.y * relSprPos.x) - (pDir.x * relSprPos.y)),
+                             invMat * (((-cPlane.y) * relSprPos.x) + (cPlane.x * relSprPos.y))};
+
+        sprScrX = int((screenWidth/2.0f) * (1.0f + camSprPos.x/camSprPos.y));
+        sprH = abs(int(screenHeight/camSprPos.y));
+        sprW = sprH;
+        texRatio = float(currTex->w)/float(sprW);
+
+        drawStartY = -sprH/2 + screenHeight/2;
+        if(drawStartY < 0) drawStartY = 0;
+        drawEndY = sprH/2 + screenHeight/2;
+        if(drawEndY >= screenHeight) drawEndY = screenHeight - 1;
+
+        drawStartX = -sprW/2 + sprScrX;
+        I_drawStartX = drawStartX;
+        if(drawStartX < 0) drawStartX = 0;
+        drawEndX = sprW/2 + sprScrX;
+        if(drawEndX >= screenWidth) drawEndX = screenWidth - 1;
+
+        for(int x = drawStartX; x < drawEndX; x++) {
+            texX = int(256*(x - I_drawStartX)*texRatio)/256;
+            if(camSprPos.y > 0 && x > 0 && x < screenWidth && camSprPos.y < rayBuffer[x].dist)
+                for(int y = drawStartY; y < drawEndY; y++) {
+                    delt = (y)*256 - screenHeight*128 + sprH*128;
+                    texY = ((delt * currTex->h)/sprH)/256;
+                    scolor = texBuff[(currTex->pitch/sizeof(Uint32))*texY + texX];
+                    if(scolor & 0xFF) buffPix[(*buffPitch/sizeof(Uint32))*y + x] = scolor;
+                }
+        }
+    }
 }
