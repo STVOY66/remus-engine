@@ -13,9 +13,10 @@ Uint32 getPixelData(Uint32* pixels, int pitch, int x, int y) {
     return pixels[y*(pitch/sizeof(Uint32)) + x];
 }
 
-void darkenPixelRGBA8888(Uint32 *color, float amt) {
+void darkenPixelRGBA8888(Uint32 *color, int percent) {
+    if(percent > 100) percent = 100;
     short int r = (*color >> 24) & 0xFF, g = (*color >> 16) & 0xFF, b = (*color >> 8) & 0xFF, a = (*color & 0xFF);
-    r *= amt; g *= amt; b *= amt;
+    r = (r * percent)/100; g = (g * percent)/100; b = (b * percent)/100;
     *color = ((r << 24) | (g << 16) | (b << 8) | a);
 }
 

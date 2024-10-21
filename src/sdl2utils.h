@@ -22,7 +22,7 @@ namespace fs = std::filesystem;
 // Retrieve pixel data from position
 Uint32 getPixelData(Uint32*, int, int, int);
 
-void darkenPixelRGBA8888(Uint32*, float);
+void darkenPixelRGBA8888(Uint32*, int);
 
 // Class for texture storage
 class TexCache {

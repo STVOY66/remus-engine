@@ -472,7 +472,7 @@ void renderView() {
             if(drawEnd >= screenHeight) drawEnd = screenHeight;
             deltaHeight = (lineHeight > screenHeight) ? lineHeight - screenHeight : 0;
 
-            pixColor = (currentRay.side == EW) ? 0xFF0000FF : 0x7D0000FF;
+            // pixColor = (currentRay.side == EW) ? 0xFF0000FF : 0x7D0000FF;
 
             if(mapVal <= wallTex->cache.size() && mapVal > 0) {
                 currTex = wallTex->cache.at("wall.png");
@@ -489,8 +489,8 @@ void renderView() {
                     texPos += texStep;
                     pixIndex = (texY*(currTex->pitch/sizeof(Uint32)) + texX);
                     pixColor = texPix[pixIndex];
-                    // if(currentRay.side == EW) pixColor = darkenPixelRGBA8888(pixColor, 0.8f);
-                    if(currentRay.side == EW) darkenPixelRGBA8888(&pixColor, 0.8f);
+                    if(currentRay.side == EW) darkenPixelRGBA8888(&pixColor, 80);
+                    // darkenPixelRGBA8888(&pixColor, int(150/currentRay.dist)); // rude lighting
                     bufferPixels[y*(bufferPitch/sizeof(Uint32)) + x] = pixColor;
                 }
             }
@@ -530,9 +530,11 @@ void renderCeilFloor(Uint32* buffPix, int *buffPitch) {
             floorPos.y += floorStepY;
 
             pixColor = floorTexBuff[texPosF.y*(floorTex->pitch/sizeof(Uint32)) + texPosF.x];
+            // darkenPixelRGBA8888(&pixColor, int(150/rowDist)); // rude lighting
             buffPix[y*(*buffPitch/sizeof(Uint32)) + x] = pixColor;
 
             pixColor = ceilTexBuff[texPosC.y*(ceilTex->pitch/sizeof(Uint32)) + texPosC.x];
+            // darkenPixelRGBA8888(&pixColor, int(150/rowDist)); // rude lighting
             buffPix[(screenHeight - y - 1)*(*buffPitch/sizeof(Uint32)) + x] = pixColor;
         }
     }
@@ -580,6 +582,7 @@ void renderSprites(Uint32 *buffPix, int *buffPitch) {
                     delt = (y)*256 - screenHeight*128 + sprH*128;
                     texY = ((delt * currTex->h)/sprH)/256;
                     scolor = texBuff[(currTex->pitch/sizeof(Uint32))*texY + texX];
+                    // darkenPixelRGBA8888(&scolor, int(150/camSprPos.y)); // rude lighting
                     if(scolor & 0xFF) buffPix[(*buffPitch/sizeof(Uint32))*y + x] = scolor;
                 }
             }
