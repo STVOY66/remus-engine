@@ -557,6 +557,7 @@ void renderSprites(Uint32 *buffPix, int *buffPitch) {
                              invMat * (((-cPlane.y) * relSprPos.x) + (cPlane.x * relSprPos.y))};
 
         sprScrX = int((screenWidth/2.0f) * (1.0f + camSprPos.x/camSprPos.y));
+        // std::cout << sprScrX << '\n';
         sprH = abs(int(screenHeight/camSprPos.y));
         sprW = sprH;
         texRatio = float(currTex->w)/float(sprW);
@@ -570,17 +571,18 @@ void renderSprites(Uint32 *buffPix, int *buffPitch) {
         I_drawStartX = drawStartX;
         if(drawStartX < 0) drawStartX = 0;
         drawEndX = sprW/2 + sprScrX;
-        if(drawEndX >= screenWidth) drawEndX = screenWidth - 1;
+        if(drawEndX >= (signed)screenWidth) drawEndX = screenWidth - 1;
 
         for(int x = drawStartX; x < drawEndX; x++) {
-            texX = int(256*(x - I_drawStartX)*texRatio)/256;
-            if(camSprPos.y > 0 && x > 0 && x < screenWidth && camSprPos.y < rayBuffer[x].dist)
+            if(camSprPos.y > 0 && x > 0 && x < screenWidth && camSprPos.y < rayBuffer[x].dist) {
+                texX = int(256*(x - I_drawStartX)*texRatio)/256;
                 for(int y = drawStartY; y < drawEndY; y++) {
                     delt = (y)*256 - screenHeight*128 + sprH*128;
                     texY = ((delt * currTex->h)/sprH)/256;
                     scolor = texBuff[(currTex->pitch/sizeof(Uint32))*texY + texX];
                     if(scolor & 0xFF) buffPix[(*buffPitch/sizeof(Uint32))*y + x] = scolor;
                 }
+            }
         }
     }
 }
