@@ -9,8 +9,8 @@
 namespace fs = std::filesystem;
 
 // ******** RGBA8888 color constants ********
-#define BLACK 0x000000FF
-#define GRAY 0x7D7D7DFF
+#define BLACK 0x000000FF;
+#define GRAY 0x7D7D7DFF;
 #define WHITE 0xFFFFFFFF;
 #define RED 0xFF0000FF;
 #define DARK_RED 0x7D0000FF;

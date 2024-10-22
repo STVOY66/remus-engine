@@ -80,9 +80,10 @@ void loadTextures();
 void close();
 void clearFrameBuffer();
 
+void draw();
 void drawPlayer(Player2D);
 void drawRays2D();
-void draw2DMap(const int*, Vector2f, int);
+void draw2DMap(const int*, Vector2i, int);
 void drawDebug();
 
 void renderView();
@@ -241,6 +242,7 @@ void render() {
 
     renderView();
     //renderDebug();
+    //draw();
 
     SDL_RenderCopy(mainRender, frameBuffer, NULL, NULL);
     SDL_RenderPresent(mainRender);
@@ -265,12 +267,20 @@ void update() {
     updateSprites();
 }
 
+void draw() {
+    draw2DMap(testmap1, mapDim, 64);
+    drawPlayer(player);
+}
+
 //Draws player on 2d plane.
 void drawPlayer(Player2D pl) {
     //visualize movement direction (now locked to look direction) on 2d plane
-    //DrawLine(pl.position.x, pl.position.y, pl.position.x + pl.GetMoveDir().x*mapScale, pl.position.y + pl.GetMoveDir().y*mapScale, BLUE);
+    SDL_SetRenderDrawColor(mainRender, 0, 0xFF, 0xFF, SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawLine(mainRender, pl.position.x * 64, pl.position.y * 64, (pl.position.x * 64) + pl.GetDir().x*20.0f, (pl.position.y * 64) + pl.GetDir().y*20.0f);
     //visualize player on 2d plane.
-    //DrawCircle(pl.position.x, pl.position.y, 8.0f, RED);
+    SDL_Rect playRect = SDL_Rect{(pl.position.x * 64) - 4, (pl.position.y * 64) - 4, 8, 8};
+    SDL_SetRenderDrawColor(mainRender, 0xFF, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(mainRender, &playRect);
 }
 
 bool eventHandler(SDL_Event e) {
@@ -281,15 +291,25 @@ bool eventHandler(SDL_Event e) {
 }
 
 //top-down visualization of map
-void draw2DMap(const int *map, Vector2f dim, int squareLen) {
-    // int currPos[2];
-    // SDL_Color squareColor;
-    // for(int i = 0; i < (dim.x * dim.y); i++) {
-    //     squareColor = (map[i] > 0) ? WHITE : BLACK; 
-    //     currPos[0] = i % (int)dim.x;
-    //     currPos[1] = i / (int)dim.y;
-    //     DrawRectangle(currPos[0]*squareLen, currPos[1]*squareLen, squareLen, squareLen, squareColor);
-    // }
+void draw2DMap(const int *map, Vector2i dim, int squareLen) {
+    Vector2i currPos;
+    Uint32 squareColor;
+    SDL_Rect currRect;
+    for(int i = 0; i < (dim.x * dim.y); i++) {
+        switch(map[i]) {
+            case 0:
+                squareColor = 0x000000FF;
+                break;
+            case 1:
+                squareColor = 0xFFFFFFFF;
+                break;
+        }
+        SDL_SetRenderDrawColor(mainRender, (squareColor >> 24) & 0xFF, (squareColor >> 16) & 0xFF, (squareColor >> 8) & 0xFF, SDL_ALPHA_OPAQUE);
+        currPos.x = (i % (int)dim.x) * squareLen;
+        currPos.y = (i / (int)dim.y) * squareLen;
+        currRect = SDL_Rect{currPos.x, currPos.y, squareLen, squareLen};
+        SDL_RenderFillRect(mainRender, &currRect);
+    }
 }
 
 //draws debugging information to screen at runtime
@@ -339,16 +359,15 @@ void movePlayer(Player2D *pl, const Uint8* keyStates) {
 
     dir = pl->GetDir();
     float offWall = 5.0f;
+    Vector2f move = pl->position;
 
     if(keyStates[SDL_SCANCODE_W]) {
-        newX = (testmap1[int(pos.y)*mapDim.x + int(pos.x + dir.x*ls*offWall)] > 0) ? pos.x : pos.x + (dir.x*ls);
-        newY = (testmap1[int(pos.y + dir.y*ls*offWall)*mapDim.x + int(pos.x)] > 0) ? pos.y : pos.y + (dir.y*ls);
-        pl->position = {newX, newY};
+        if(testmap1[int(pos.y)*mapDim.x + int(pos.x + dir.x*ls*offWall)] <= 0) pl->position.x += (dir.x*ls);
+        if(testmap1[int(pos.y + dir.y*ls*offWall)*mapDim.x + int(pos.x)] <= 0) pl->position.y += (dir.y*ls);
     }
     else if(keyStates[SDL_SCANCODE_S]) {
-        newX = (testmap1[int(pos.y)*mapDim.x + int(pos.x - dir.x*ls*offWall)] > 0) ? pos.x : pos.x - (dir.x*ls);
-        newY = (testmap1[int(pos.y - dir.y*ls*offWall)*mapDim.x + int(pos.x)] > 0) ? pos.y : pos.y - (dir.y*ls);
-        pl->position = {newX, newY};
+        if(testmap1[int(pos.y)*mapDim.x + int(pos.x - dir.x*ls*offWall)] <= 0) pl->position.x -= (dir.x*ls);
+        if(testmap1[int(pos.y - dir.y*ls*offWall)*mapDim.x + int(pos.x)] <= 0) pl->position.y -= (dir.y*ls);
     }
 }
 
